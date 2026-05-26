@@ -2132,9 +2132,6 @@ function renderIncomesTab() {
     document.getElementById('kpi-inc-rent-month').textContent = formatBRL(monthRentVal);
     document.getElementById('kpi-inc-rent-month-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
     
-    document.getElementById('kpi-inc-average').textContent = formatBRL(avgIncome);
-    document.getElementById('kpi-inc-average-desc').textContent = `Média mensal nos meses ativos`;
-    
     // Render Evolution Chart (Stacked Bar)
     if (chartIncEvolution) chartIncEvolution.destroy();
     
