@@ -728,14 +728,13 @@ function renderCharts() {
     
     const expenseTotals = {};
     let hasExpenses = false;
-    for (let m = 1; m <= activeMonthsCount; m++) {
-        const mData = financialData[selectedYear]?.[m.toString()];
-        if (mData && mData.expenses?.fixed) {
-            for (const [key, val] of Object.entries(mData.expenses.fixed)) {
-                if (val > 0) {
-                    expenseTotals[key] = (expenseTotals[key] || 0) + val;
-                    hasExpenses = true;
-                }
+    
+    const mData = financialData[selectedYear]?.[selectedMonth];
+    if (mData && mData.expenses?.fixed) {
+        for (const [key, val] of Object.entries(mData.expenses.fixed)) {
+            if (val > 0) {
+                expenseTotals[key] = val;
+                hasExpenses = true;
             }
         }
     }
@@ -745,10 +744,9 @@ function renderCharts() {
     const expColors = ['#6366f1', '#10b981', '#f59e0b', '#3b82f6', '#ec4899', '#8b5cf6', '#06b6d4', '#14b8a6', '#f43f5e'];
     
     if (hasExpenses) {
-        for (const [key, total] of Object.entries(expenseTotals)) {
-            // Use average monthly expense in chart label
+        for (const [key, val] of Object.entries(expenseTotals)) {
             expLabels.push(key.toUpperCase().replace('_', ' '));
-            expData.push(total / activeMonthsCount);
+            expData.push(val);
         }
     }
     
