@@ -2121,14 +2121,19 @@ function renderIncomesTab() {
     document.getElementById('kpi-inc-total').textContent = formatBRL(totalIncomeYear);
     document.getElementById('kpi-inc-total-desc').innerHTML = `<i class="fa-solid fa-calendar-days"></i> Acumulado em ${selectedYear}`;
     
-    document.getElementById('kpi-inc-average').textContent = formatBRL(avgIncome);
-    document.getElementById('kpi-inc-average-desc').textContent = `Média mensal nos meses ativos`;
+    // Receita Do Mês
+    const monthTotalIncome = monthSalaryVal + monthRentVal;
+    document.getElementById('kpi-inc-month-total').textContent = formatBRL(monthTotalIncome);
+    document.getElementById('kpi-inc-month-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
     
     document.getElementById('kpi-inc-salary-month').textContent = formatBRL(monthSalaryVal);
     document.getElementById('kpi-inc-salary-month-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
     
     document.getElementById('kpi-inc-rent-month').textContent = formatBRL(monthRentVal);
     document.getElementById('kpi-inc-rent-month-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
+    
+    document.getElementById('kpi-inc-average').textContent = formatBRL(avgIncome);
+    document.getElementById('kpi-inc-average-desc').textContent = `Média mensal nos meses ativos`;
     
     // Render Evolution Chart (Stacked Bar)
     if (chartIncEvolution) chartIncEvolution.destroy();
