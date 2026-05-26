@@ -29,6 +29,10 @@
                     <i class="fa-solid fa-gauge"></i>
                     <span>Dashboard</span>
                 </button>
+                <button class="nav-item" data-tab="quick-view">
+                    <i class="fa-solid fa-bolt"></i>
+                    <span>Visão Rápida</span>
+                </button>
                 <button class="nav-item" data-tab="incomes">
                     <i class="fa-solid fa-hand-holding-dollar"></i>
                     <span>Receitas</span>
@@ -236,6 +240,100 @@
                         <div class="chart-wrapper doughnut">
                             <canvas id="chart-expenses-pie"></canvas>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: VISÃO RÁPIDA (CONFRONTO DE CONTAS) -->
+            <section class="tab-content" id="tab-quick-view">
+                <!-- Main KPIs -->
+                <div class="kpi-grid">
+                    <div class="kpi-card">
+                        <div class="kpi-icon income"><i class="fa-solid fa-arrow-trend-up"></i></div>
+                        <div class="kpi-info">
+                            <p class="kpi-title">Receita do Mês</p>
+                            <p class="kpi-value" id="kpi-quick-income">R$ 0,00</p>
+                            <span class="kpi-trend positive" id="kpi-quick-income-desc">
+                                <i class="fa-solid fa-clock"></i> Mês de referência
+                            </span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon expense"><i class="fa-solid fa-arrow-trend-down"></i></div>
+                        <div class="kpi-info">
+                            <p class="kpi-title">Despesa do Mês</p>
+                            <p class="kpi-value" id="kpi-quick-expenses">R$ 0,00</p>
+                            <span class="kpi-trend negative" id="kpi-quick-expenses-desc">
+                                <i class="fa-solid fa-clock"></i> Fixo + Cartões
+                            </span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon investment"><i class="fa-solid fa-piggy-bank"></i></div>
+                        <div class="kpi-info">
+                            <p class="kpi-title">Aporte do Mês</p>
+                            <p class="kpi-value" id="kpi-quick-aporte">R$ 0,00</p>
+                            <span class="kpi-trend positive" id="kpi-quick-aporte-desc">
+                                <i class="fa-solid fa-clock"></i> Total investido
+                            </span>
+                        </div>
+                    </div>
+                    <div class="kpi-card">
+                        <div class="kpi-icon yield"><i class="fa-solid fa-coins"></i></div>
+                        <div class="kpi-info">
+                            <p class="kpi-title">Rendimento do Mês</p>
+                            <p class="kpi-value" id="kpi-quick-yield">R$ 0,00</p>
+                            <span class="kpi-trend positive" id="kpi-quick-yield-desc">
+                                <i class="fa-solid fa-chart-line"></i> Juros auferidos
+                            </span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Secondary Summary Bar -->
+                <div class="quick-summary-bar">
+                    <div class="summary-item">
+                        <span>Sobra Líquida (Dia a Dia):</span>
+                        <strong id="kpi-quick-net-cashflow">R$ 0,00</strong>
+                    </div>
+                    <div class="summary-item">
+                        <span>Taxa de Poupança Real:</span>
+                        <strong id="kpi-quick-savings-rate">0%</strong>
+                    </div>
+                </div>
+
+                <!-- Chart Grid -->
+                <div class="charts-grid" style="margin-top: 25px;">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Balanço do Mês</h3>
+                            <span class="chart-subtitle">Confronto direto das quatro vertentes</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-quick-confrontation"></canvas>
+                        </div>
+                    </div>
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h3>Evolução das Vertentes no Ano</h3>
+                            <span class="chart-subtitle">Trajetória mensal de receitas, despesas, aportes e rendimentos</span>
+                        </div>
+                        <div class="chart-wrapper">
+                            <canvas id="chart-quick-evolution"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Confrontation Table -->
+                <div class="table-card" style="margin-top: 25px;">
+                    <div class="table-header">
+                        <h3>Diferencial e Confronto Mensal</h3>
+                        <span class="table-subtitle">Tabela resumida das movimentações e sobra líquida por mês</span>
+                    </div>
+                    <div class="table-responsive">
+                        <table class="data-table" id="table-quick-confrontation">
+                            <!-- Populated via JS -->
+                        </table>
                     </div>
                 </div>
             </section>

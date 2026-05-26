@@ -25,6 +25,8 @@ let chartCardEvolution = null;
 let chartCardDistribution = null;
 let chartAdvProjection = null;
 let chartAdvBreakdown = null;
+let chartQuickConfrontation = null;
+let chartQuickEvolution = null;
 
 // Month mappings
 const monthNames = [
@@ -185,6 +187,11 @@ function updateHeaderTitle() {
         subtitleEl.textContent = 'Visão unificada das suas finanças e investimentos.';
         if (yearWrapper) yearWrapper.style.display = 'flex';
         if (monthWrapper) monthWrapper.style.display = 'flex';
+    } else if (activeTab === 'quick-view') {
+        titleEl.textContent = 'Visão Rápida';
+        subtitleEl.textContent = 'Confronto direto simplificado entre receitas, despesas, aportes e rendimentos.';
+        if (yearWrapper) yearWrapper.style.display = 'flex';
+        if (monthWrapper) monthWrapper.style.display = 'flex';
     } else if (activeTab === 'incomes') {
         titleEl.textContent = 'Análise de Receitas';
         subtitleEl.textContent = 'Acompanhamento detalhado das suas entradas financeiras.';
@@ -270,6 +277,8 @@ function updateUI() {
             }
         });
         renderHistoryTables();
+    } else if (activeTab === 'quick-view') {
+        renderQuickView();
     }
 }
 
@@ -3017,5 +3026,299 @@ function calculateAdvProjection() {
             cutout: '65%'
         }
     });
+}
+
+// ==========================================
+// VISÃO RÁPIDA (CONFRONTO DE CONTAS) LOGIC
+// ==========================================
+
+function renderQuickView() {
+    discoverKeys();
+    const year = selectedYear;
+    const yearData = financialData[year] || {};
+    const latestActiveMonth = getLatestMonthIndex(year);
+    const selectedMonthIndex = parseInt(selectedMonth) || (latestActiveMonth !== -1 ? latestActiveMonth : 1);
+    
+    // Arrays for history/evolution charts
+    const monthlyIncome = Array(12).fill(0);
+    const monthlyExpenses = Array(12).fill(0);
+    const monthlyAportes = Array(12).fill(0);
+    const monthlyYields = Array(12).fill(0);
+    
+    // Fill monthly data
+    for (let m = 1; m <= 12; m++) {
+        const mStr = m.toString();
+        const mData = yearData[mStr];
+        if (mData) {
+            // Income
+            const inc = Object.values(mData.incomes || {}).reduce((acc, v) => acc + v, 0);
+            monthlyIncome[m - 1] = inc;
+            
+            // Expenses
+            const fixed = Object.values(mData.expenses?.fixed || {}).reduce((acc, v) => acc + v, 0);
+            const cards = Object.values(mData.expenses?.cards || {}).reduce((acc, v) => acc + v, 0);
+            monthlyExpenses[m - 1] = fixed + cards;
+            
+            // Aportes & Yields
+            let ap = 0;
+            let yld = 0;
+            if (mData.investments) {
+                for (const bank in mData.investments) {
+                    const item = mData.investments[bank];
+                    if (bank === 'outros') {
+                        for (const asset in item) {
+                            ap += (item[asset].aporte || 0);
+                            yld += (item[asset].juros || 0);
+                        }
+                    } else {
+                        ap += (item.aporte || 0);
+                        yld += (item.juros || 0);
+                    }
+                }
+            }
+            monthlyAportes[m - 1] = ap;
+            monthlyYields[m - 1] = yld;
+        }
+    }
+    
+    const activeMonthsCount = latestActiveMonth !== -1 ? latestActiveMonth : 12;
+    
+    // Selected Month Metrics
+    const selIncome = monthlyIncome[selectedMonthIndex - 1];
+    const selExpense = monthlyExpenses[selectedMonthIndex - 1];
+    const selAporte = monthlyAportes[selectedMonthIndex - 1];
+    const selYield = monthlyYields[selectedMonthIndex - 1];
+    const selNetFlow = selIncome - selExpense - selAporte;
+    const selSavingsRate = selIncome > 0 ? (selAporte / selIncome) * 100 : 0;
+    
+    const refMonthName = monthNames[selectedMonthIndex - 1];
+    
+    // Render KPIs
+    document.getElementById('kpi-quick-income').textContent = formatBRL(selIncome);
+    document.getElementById('kpi-quick-income-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Entradas em ${refMonthName}`;
+    
+    document.getElementById('kpi-quick-expenses').textContent = formatBRL(selExpense);
+    document.getElementById('kpi-quick-expenses-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Saídas em ${refMonthName}`;
+    
+    document.getElementById('kpi-quick-aporte').textContent = formatBRL(selAporte);
+    document.getElementById('kpi-quick-aporte-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Investido em ${refMonthName}`;
+    
+    document.getElementById('kpi-quick-yield').textContent = formatBRL(selYield);
+    document.getElementById('kpi-quick-yield-desc').innerHTML = `<i class="fa-solid fa-chart-line"></i> Recebido em ${refMonthName}`;
+    
+    // Secondary Summary bar
+    const netflowEl = document.getElementById('kpi-quick-net-cashflow');
+    netflowEl.textContent = formatBRL(selNetFlow);
+    if (selNetFlow >= 0) {
+        netflowEl.className = 'positive';
+    } else {
+        netflowEl.className = 'negative';
+    }
+    
+    const savingsEl = document.getElementById('kpi-quick-savings-rate');
+    savingsEl.textContent = `${selSavingsRate.toFixed(1)}%`;
+    if (selSavingsRate >= 30) {
+        savingsEl.className = 'positive';
+    } else {
+        savingsEl.className = '';
+    }
+    
+    // Render Chart 1: Bar confrontation for the selected month
+    if (chartQuickConfrontation) chartQuickConfrontation.destroy();
+    const ctxConfront = document.getElementById('chart-quick-confrontation').getContext('2d');
+    chartQuickConfrontation = new Chart(ctxConfront, {
+        type: 'bar',
+        data: {
+            labels: ['Receitas', 'Despesas', 'Aportes', 'Rendimento/Juros'],
+            datasets: [{
+                label: `Valores em ${refMonthName}`,
+                data: [selIncome, selExpense, selAporte, selYield],
+                backgroundColor: ['#10b981', '#ef4444', '#3b82f6', '#f59e0b'],
+                borderRadius: 8,
+                barThickness: 40
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return formatBRL(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#9ca3af', font: { family: 'Inter', size: 11 } } },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 10 },
+                        callback: function(value) { return formatBRL(value); }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Render Chart 2: Annual evolution curves
+    if (chartQuickEvolution) chartQuickEvolution.destroy();
+    const ctxEvolution = document.getElementById('chart-quick-evolution').getContext('2d');
+    chartQuickEvolution = new Chart(ctxEvolution, {
+        type: 'line',
+        data: {
+            labels: monthNames.slice(0, activeMonthsCount),
+            datasets: [
+                {
+                    label: 'Receitas',
+                    data: monthlyIncome.slice(0, activeMonthsCount),
+                    borderColor: '#10b981',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Despesas',
+                    data: monthlyExpenses.slice(0, activeMonthsCount),
+                    borderColor: '#ef4444',
+                    borderWidth: 3,
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Aportes',
+                    data: monthlyAportes.slice(0, activeMonthsCount),
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.1
+                },
+                {
+                    label: 'Rendimentos',
+                    data: monthlyYields.slice(0, activeMonthsCount),
+                    borderColor: '#f59e0b',
+                    borderWidth: 2,
+                    borderDash: [3, 3],
+                    fill: false,
+                    tension: 0.1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatBRL(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 10 },
+                        callback: function(value) { return formatBRL(value); }
+                    }
+                }
+            }
+        }
+    });
+    
+    // Render confrontation table
+    const tableEl = document.getElementById('table-quick-confrontation');
+    tableEl.innerHTML = '';
+    
+    const thead = document.createElement('thead');
+    thead.innerHTML = `
+        <tr>
+            <th>Mês</th>
+            <th>Receita</th>
+            <th>Despesa</th>
+            <th>Aporte</th>
+            <th>Rendimento</th>
+            <th>Sobra Líquida</th>
+            <th>Balanço</th>
+        </tr>
+    `;
+    tableEl.appendChild(thead);
+    
+    const tbody = document.createElement('tbody');
+    
+    let sumInc = 0;
+    let sumExp = 0;
+    let sumAp = 0;
+    let sumYld = 0;
+    let sumNet = 0;
+    
+    for (let m = 1; m <= activeMonthsCount; m++) {
+        const inc = monthlyIncome[m - 1];
+        const exp = monthlyExpenses[m - 1];
+        const ap = monthlyAportes[m - 1];
+        const yld = monthlyYields[m - 1];
+        const net = inc - exp - ap;
+        
+        sumInc += inc;
+        sumExp += exp;
+        sumAp += ap;
+        sumYld += yld;
+        sumNet += net;
+        
+        const isCurrent = m === selectedMonthIndex;
+        const tr = document.createElement('tr');
+        if (isCurrent) tr.style.backgroundColor = 'rgba(99, 102, 241, 0.08)';
+        
+        const statusIcon = net >= 0 ? 
+            `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Superávit</span>` :
+            `<span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Déficit</span>`;
+            
+        tr.innerHTML = `
+            <td style="font-weight: ${isCurrent ? '700' : 'normal'};">${monthNames[m - 1]}</td>
+            <td class="num-val">${formatBRL(inc)}</td>
+            <td class="num-val">${formatBRL(exp)}</td>
+            <td class="num-val">${formatBRL(ap)}</td>
+            <td class="num-val">${formatBRL(yld)}</td>
+            <td class="num-val ${net >= 0 ? 'text-green' : 'num-val negative'}" style="font-weight: 600;">${formatBRL(net)}</td>
+            <td style="text-align: center;">${statusIcon}</td>
+        `;
+        tbody.appendChild(tr);
+    }
+    
+    // Total Row
+    const trTotal = document.createElement('tr');
+    trTotal.className = 'total-row';
+    const totalStatus = sumNet >= 0 ?
+        `<span class="badge badge-success"><i class="fa-solid fa-circle-check"></i> Superávit</span>` :
+        `<span class="badge badge-danger"><i class="fa-solid fa-circle-xmark"></i> Déficit</span>`;
+        
+    trTotal.innerHTML = `
+        <td>TOTAL ANUAL</td>
+        <td class="num-val">${formatBRL(sumInc)}</td>
+        <td class="num-val">${formatBRL(sumExp)}</td>
+        <td class="num-val">${formatBRL(sumAp)}</td>
+        <td class="num-val">${formatBRL(sumYld)}</td>
+        <td class="num-val ${sumNet >= 0 ? 'text-green' : 'num-val negative'}" style="font-weight: 700;">${formatBRL(sumNet)}</td>
+        <td style="text-align: center;">${totalStatus}</td>
+    `;
+    tbody.appendChild(trTotal);
+    
+    tableEl.appendChild(tbody);
 }
 
