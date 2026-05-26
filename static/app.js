@@ -729,9 +729,9 @@ function renderCharts() {
     const expenseTotals = {};
     let hasExpenses = false;
     
-    const mData = financialData[selectedYear]?.[selectedMonth];
-    if (mData && mData.expenses?.fixed) {
-        for (const [key, val] of Object.entries(mData.expenses.fixed)) {
+    const currentMonthData = financialData[selectedYear]?.[selectedMonth];
+    if (currentMonthData && currentMonthData.expenses?.fixed) {
+        for (const [key, val] of Object.entries(currentMonthData.expenses.fixed)) {
             if (val > 0) {
                 expenseTotals[key] = val;
                 hasExpenses = true;
