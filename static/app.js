@@ -23,6 +23,8 @@ let chartFixedEvolution = null;
 let chartFixedDistribution = null;
 let chartCardEvolution = null;
 let chartCardDistribution = null;
+let chartAdvProjection = null;
+let chartAdvBreakdown = null;
 
 // Month mappings
 const monthNames = [
@@ -56,6 +58,8 @@ function initApp() {
             // Trigger chart updates/simulator recalculations if needed
             if (activeTab === 'simulator') {
                 initSimulatorData();
+            } else if (activeTab === 'adv-simulator') {
+                initAdvSimulator();
             } else {
                 updateUI();
             }
@@ -209,6 +213,11 @@ function updateHeaderTitle() {
     } else if (activeTab === 'simulator') {
         titleEl.textContent = 'Simulador de Juros Compostos';
         subtitleEl.textContent = 'Projete e simule o crescimento do seu patrimônio.';
+        if (yearWrapper) yearWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'none';
+    } else if (activeTab === 'adv-simulator') {
+        titleEl.textContent = 'Simulador Pro (Avançado)';
+        subtitleEl.textContent = 'Projeção customizável com cenários de juros, inflação, aportes extras e metas de aposentadoria.';
         if (yearWrapper) yearWrapper.style.display = 'none';
         if (monthWrapper) monthWrapper.style.display = 'none';
     }
@@ -2657,3 +2666,356 @@ function renderCardExpensesTab() {
     
     tableEl.appendChild(tbody);
 }
+
+// ==========================================
+// ADVANCED SIMULATOR (SIMULADOR PRO) LOGIC
+// ==========================================
+
+let advSimInitialized = false;
+
+function initAdvSimulator() {
+    if (advSimInitialized) {
+        // Just recalculate and update if already initialized
+        calculateAdvProjection();
+        return;
+    }
+    
+    // Set starting capital to January CDB sum if available
+    const currentYear = selectedYear;
+    const currentStartingCapital = getJanStartingCapital(currentYear);
+    if (currentStartingCapital > 0) {
+        document.getElementById('adv-sim-starting').value = Math.round(currentStartingCapital);
+    }
+    
+    // Bind slider values displays
+    const sliders = [
+        { id: 'adv-sim-years', valId: 'adv-sim-years-val', suffix: ' anos' },
+        { id: 'adv-sim-rate', valId: 'adv-sim-rate-val', suffix: '%' },
+        { id: 'adv-sim-inflation', valId: 'adv-sim-inflation-val', suffix: '%' },
+        { id: 'adv-sim-increase', valId: 'adv-sim-increase-val', suffix: '%' },
+        { id: 'adv-sim-swr', valId: 'adv-sim-swr-val', suffix: '% ao ano' }
+    ];
+    
+    sliders.forEach(s => {
+        const sliderEl = document.getElementById(s.id);
+        const valEl = document.getElementById(s.valId);
+        if (sliderEl && valEl) {
+            sliderEl.addEventListener('input', (e) => {
+                valEl.textContent = e.target.value + s.suffix;
+                calculateAdvProjection();
+            });
+        }
+    });
+    
+    // Bind other inputs to trigger updates
+    const inputs = [
+        'adv-sim-starting',
+        'adv-sim-monthly',
+        'adv-sim-bonus',
+        'adv-sim-oneoff',
+        'adv-sim-oneoff-year',
+        'adv-sim-target-wealth',
+        'adv-sim-target-income'
+    ];
+    
+    inputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => calculateAdvProjection());
+        }
+    });
+    
+    // Bind Presets
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+            e.currentTarget.classList.add('active');
+            
+            const preset = e.currentTarget.getAttribute('data-preset');
+            const rateSlider = document.getElementById('adv-sim-rate');
+            const inflationSlider = document.getElementById('adv-sim-inflation');
+            
+            if (preset === 'saving') {
+                rateSlider.value = 6.0;
+                inflationSlider.value = 4.5;
+            } else if (preset === 'fixed') {
+                rateSlider.value = 10.5;
+                inflationSlider.value = 4.5;
+            } else if (preset === 'equity') {
+                rateSlider.value = 13.0;
+                inflationSlider.value = 4.5;
+            } else if (preset === 'real') {
+                rateSlider.value = 6.0;
+                inflationSlider.value = 0.0;
+            }
+            
+            // Trigger input events to update text labels and recalculate
+            rateSlider.dispatchEvent(new Event('input'));
+            inflationSlider.dispatchEvent(new Event('input'));
+        });
+    });
+    
+    advSimInitialized = true;
+    calculateAdvProjection();
+}
+
+function calculateAdvProjection() {
+    // 1. Get inputs
+    const initialCapital = parseFloat(document.getElementById('adv-sim-starting').value) || 0;
+    const initialMonthly = parseFloat(document.getElementById('adv-sim-monthly').value) || 0;
+    const years = parseInt(document.getElementById('adv-sim-years').value) || 20;
+    const annualRate = parseFloat(document.getElementById('adv-sim-rate').value) || 10.5;
+    const annualInflation = parseFloat(document.getElementById('adv-sim-inflation').value) || 4.5;
+    const annualIncrease = parseFloat(document.getElementById('adv-sim-increase').value) || 3.0;
+    const annualBonus = parseFloat(document.getElementById('adv-sim-bonus').value) || 0;
+    const oneoffAmount = parseFloat(document.getElementById('adv-sim-oneoff').value) || 0;
+    const oneoffYear = parseInt(document.getElementById('adv-sim-oneoff-year').value) || 5;
+    const targetWealth = parseFloat(document.getElementById('adv-sim-target-wealth').value) || 1500000;
+    const targetIncome = parseFloat(document.getElementById('adv-sim-target-income').value) || 8000;
+    const swr = parseFloat(document.getElementById('adv-sim-swr').value) || 4.0;
+    
+    // 2. Calculations setup
+    const months = years * 12;
+    const monthlyRate = Math.pow(1 + annualRate / 100, 1 / 12) - 1;
+    
+    let nominalBalance = initialCapital;
+    let totalInvested = initialCapital;
+    
+    let investedInitial = initialCapital;
+    let investedMonthly = 0;
+    let investedExtra = 0;
+    
+    let monthlyAporte = initialMonthly;
+    
+    const nominalHistory = [initialCapital];
+    const realHistory = [initialCapital];
+    const investedHistory = [initialCapital];
+    const labels = ['Início'];
+    
+    let reachedTargetYear = -1;
+    
+    // Effective wealth goal target
+    const requiredWealthForIncome = (targetIncome * 12) / (swr / 100);
+    const effectiveTarget = Math.max(targetWealth, requiredWealthForIncome);
+    
+    // 3. Month by Month Loop
+    for (let m = 1; m <= months; m++) {
+        const yearOfSimulation = Math.ceil(m / 12);
+        
+        // Year transitions: grow monthly deposit
+        if (m > 1 && (m - 1) % 12 === 0) {
+            monthlyAporte = monthlyAporte * (1 + annualIncrease / 100);
+        }
+        
+        let extraThisMonth = 0;
+        
+        // Annual recurring bonus (Dec)
+        if (m % 12 === 0) {
+            extraThisMonth += annualBonus;
+            investedExtra += annualBonus;
+        }
+        
+        // One-off contribution
+        if (yearOfSimulation === oneoffYear && (m - 1) % 12 === 0) {
+            extraThisMonth += oneoffAmount;
+            investedExtra += oneoffAmount;
+        }
+        
+        const currentAporte = monthlyAporte + extraThisMonth;
+        investedMonthly += (currentAporte - extraThisMonth);
+        totalInvested += currentAporte;
+        
+        // Compounding
+        nominalBalance = (nominalBalance + currentAporte) * (1 + monthlyRate);
+        
+        // If year end, save history
+        if (m % 12 === 0) {
+            const y = m / 12;
+            labels.push(`Ano ${y}`);
+            nominalHistory.push(nominalBalance);
+            investedHistory.push(totalInvested);
+            
+            // Discount for inflation to get real value (today's purchasing power)
+            const realBalance = nominalBalance / Math.pow(1 + annualInflation / 100, y);
+            realHistory.push(realBalance);
+            
+            if (reachedTargetYear === -1 && realBalance >= effectiveTarget) {
+                reachedTargetYear = y;
+            }
+        }
+    }
+    
+    const finalNominal = nominalBalance;
+    const finalReal = finalNominal / Math.pow(1 + annualInflation / 100, years);
+    const totalInterest = finalNominal - totalInvested;
+    const passiveIncomeReal = (finalReal * (swr / 100)) / 12;
+    
+    // 4. Bind Results to UI
+    document.getElementById('adv-result-gross').textContent = formatBRL(finalNominal);
+    document.getElementById('adv-result-real').textContent = formatBRL(finalReal);
+    document.getElementById('adv-result-invested').textContent = formatBRL(totalInvested);
+    document.getElementById('adv-result-interest').textContent = formatBRL(totalInterest);
+    document.getElementById('adv-result-passive-income').textContent = formatBRL(passiveIncomeReal);
+    
+    const investedPct = finalNominal > 0 ? Math.round((totalInvested / finalNominal) * 100) : 0;
+    const interestPct = finalNominal > 0 ? 100 - investedPct : 0;
+    
+    document.getElementById('adv-result-invested-pct').textContent = `${investedPct}% do total`;
+    document.getElementById('adv-result-interest-pct').textContent = `${interestPct}% do total`;
+    document.getElementById('adv-result-passive-desc').textContent = `Equivale a ${swr.toFixed(1)}% a.a. sobre o patrimônio real`;
+    
+    // Goal status indicator
+    const goalStatusEl = document.getElementById('adv-goal-status');
+    if (goalStatusEl) {
+        if (reachedTargetYear !== -1) {
+            goalStatusEl.className = 'goal-status-box success';
+            goalStatusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Meta atingida no Ano ${reachedTargetYear}!`;
+        } else {
+            goalStatusEl.className = 'goal-status-box warning';
+            const missing = effectiveTarget - finalReal;
+            if (missing > 0) {
+                goalStatusEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Falta ${formatBRL(missing)} para a meta`;
+            } else {
+                goalStatusEl.innerHTML = `<i class="fa-solid fa-hourglass-half"></i> Meta não atingida no prazo`;
+            }
+        }
+    }
+    
+    // 5. Update text summary
+    const summaryEl = document.getElementById('adv-sim-text-summary');
+    if (summaryEl) {
+        let text = `<p>Ao final de <strong>${years} anos</strong>, seu patrimônio bruto acumulado será de <strong>${formatBRL(finalNominal)}</strong>.</p>`;
+        text += `<p>Descontando a inflação anual estimada em <strong>${annualInflation.toFixed(1)}%</strong>, o poder de compra real deste valor equivale a <strong>${formatBRL(finalReal)}</strong> em dinheiro de hoje.</p>`;
+        text += `<p>Você terá desembolsado o total de <strong>${formatBRL(totalInvested)}</strong> em aportes, e os juros compostos sozinhos geraram <strong>${formatBRL(totalInterest)}</strong> (${interestPct}% do saldo final).</p>`;
+        
+        if (reachedTargetYear !== -1) {
+            text += `<p class="text-green" style="font-weight: 600; margin-top: 10px;"><i class="fa-solid fa-thumbs-up"></i> Parabéns! Você atingirá seu objetivo de independência financeira (${formatBRL(effectiveTarget)}) no <strong>Ano ${reachedTargetYear}</strong> da simulação.</p>`;
+        } else {
+            const timeToGoal = Math.round(Math.log(effectiveTarget / (initialCapital || 1)) / Math.log(1 + (annualRate - annualInflation)/100));
+            if (timeToGoal > 0 && timeToGoal < 100) {
+                text += `<p class="text-gold" style="font-weight: 500; margin-top: 10px;"><i class="fa-solid fa-circle-info"></i> Com as taxas e aportes atuais, estima-se que você precisará de aproximadamente <strong>${timeToGoal} anos</strong> de acumulação real para atingir o objetivo financeiro.</p>`;
+            } else {
+                text += `<p class="text-gold" style="font-weight: 500; margin-top: 10px;"><i class="fa-solid fa-circle-info"></i> Considere aumentar o valor dos aportes mensais ou a taxa anual de retorno para acelerar a independência financeira.</p>`;
+            }
+        }
+        summaryEl.innerHTML = text;
+    }
+    
+    // 6. Render Line Chart
+    if (chartAdvProjection) chartAdvProjection.destroy();
+    
+    const ctxProjection = document.getElementById('chart-adv-projection').getContext('2d');
+    chartAdvProjection = new Chart(ctxProjection, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Patrimônio Bruto (Nominal)',
+                    data: nominalHistory,
+                    borderColor: '#8b5cf6',
+                    backgroundColor: 'rgba(139, 92, 246, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: years <= 20 ? 3 : 0
+                },
+                {
+                    label: 'Patrimônio Real (Poder de Compra)',
+                    data: realHistory,
+                    borderColor: '#10b981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.05)',
+                    borderWidth: 3,
+                    fill: true,
+                    tension: 0.1,
+                    pointRadius: years <= 20 ? 3 : 0
+                },
+                {
+                    label: 'Total Investido (Principal)',
+                    data: investedHistory,
+                    borderColor: '#3b82f6',
+                    borderWidth: 2,
+                    borderDash: [5, 5],
+                    fill: false,
+                    tension: 0.1,
+                    pointRadius: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: '#9ca3af', font: { family: 'Inter', size: 11 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatBRL(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 10 },
+                        callback: function(value) {
+                            if (value >= 1e6) return 'R$ ' + (value / 1e6).toFixed(1) + 'M';
+                            if (value >= 1e3) return 'R$ ' + (value / 1e3).toFixed(0) + 'k';
+                            return 'R$ ' + value;
+                        }
+                    }
+                }
+            }
+        }
+    });
+    
+    // 7. Render Doughnut Chart
+    if (chartAdvBreakdown) chartAdvBreakdown.destroy();
+    
+    const ctxBreakdown = document.getElementById('chart-adv-breakdown').getContext('2d');
+    chartAdvBreakdown = new Chart(ctxBreakdown, {
+        type: 'doughnut',
+        data: {
+            labels: ['Capital Inicial', 'Aportes Mensais', 'Aportes Extras', 'Juros Compostos'],
+            datasets: [
+                {
+                    data: [investedInitial, investedMonthly, investedExtra, totalInterest],
+                    backgroundColor: ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6'],
+                    borderWidth: 0
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'right',
+                    labels: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const val = context.raw;
+                            const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? Math.round((val / total) * 100) : 0;
+                            return context.label + ': ' + formatBRL(val) + ' (' + pct + '%)';
+                        }
+                    }
+                }
+            },
+            cutout: '65%'
+        }
+    });
+}
+

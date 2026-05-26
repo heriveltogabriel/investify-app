@@ -53,6 +53,10 @@
                     <i class="fa-solid fa-wand-magic-sparkles"></i>
                     <span>Simulador</span>
                 </button>
+                <button class="nav-item" data-tab="adv-simulator">
+                    <i class="fa-solid fa-chart-line"></i>
+                    <span>Simulador Pro</span>
+                </button>
             </nav>
             
             <div class="sidebar-footer">
@@ -856,6 +860,172 @@
                         </div>
                         <div class="chart-wrapper simulator-chart-wrapper">
                             <canvas id="chart-projection"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB: ADVANCED SIMULATOR (SIMULADOR PRO) -->
+            <section class="tab-content" id="tab-adv-simulator">
+                <div class="adv-sim-layout">
+                    <!-- Column 1: Configuration Controls -->
+                    <div class="adv-sim-controls-panel">
+                        <div class="panel-section">
+                            <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Parâmetros Gerais</h3>
+                            
+                            <div class="presets-row">
+                                <button type="button" class="preset-btn" data-preset="saving">Poupança (6% a.a.)</button>
+                                <button type="button" class="preset-btn active" data-preset="fixed">Renda Fixa (10.5% a.a.)</button>
+                                <button type="button" class="preset-btn" data-preset="equity">Arrojado (13% a.a.)</button>
+                                <button type="button" class="preset-btn" data-preset="real">IPCA + 6% (Real)</button>
+                            </div>
+
+                            <div class="control-grid-2">
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-starting">Capital Inicial (R$)</label>
+                                    <input type="number" id="adv-sim-starting" step="5000" class="sim-number-input" value="300000">
+                                </div>
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-monthly">Aporte Mensal (R$)</label>
+                                    <input type="number" id="adv-sim-monthly" step="500" class="sim-number-input" value="7000">
+                                </div>
+                            </div>
+
+                            <div class="control-row-slider">
+                                <div class="slider-header">
+                                    <label for="adv-sim-years">Prazo da Simulação: <span id="adv-sim-years-val" class="slider-val">20 anos</span></label>
+                                </div>
+                                <input type="range" id="adv-sim-years" min="1" max="40" value="20" class="sim-slider">
+                            </div>
+
+                            <div class="control-grid-2">
+                                <div class="control-row-slider">
+                                    <div class="slider-header">
+                                        <label for="adv-sim-rate">Juros Anual: <span id="adv-sim-rate-val" class="slider-val">10.5%</span></label>
+                                    </div>
+                                    <input type="range" id="adv-sim-rate" min="1" max="25" step="0.1" value="10.5" class="sim-slider">
+                                </div>
+                                <div class="control-row-slider">
+                                    <div class="slider-header">
+                                        <label for="adv-sim-inflation">Inflação Anual: <span id="adv-sim-inflation-val" class="slider-val">4.5%</span></label>
+                                    </div>
+                                    <input type="range" id="adv-sim-inflation" min="0" max="15" step="0.1" value="4.5" class="sim-slider">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="panel-section">
+                            <h3 class="section-title"><i class="fa-solid fa-chart-line"></i> Aumentos & Aportes Extras</h3>
+                            
+                            <div class="control-row-slider">
+                                <div class="slider-header">
+                                    <label for="adv-sim-increase">Crescimento Anual do Aporte: <span id="adv-sim-increase-val" class="slider-val">3%</span></label>
+                                </div>
+                                <input type="range" id="adv-sim-increase" min="0" max="15" step="0.5" value="3" class="sim-slider">
+                            </div>
+
+                            <div class="control-grid-2">
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-bonus">Aporte Anual Recorrente (Bônus/13º) (R$)</label>
+                                    <input type="number" id="adv-sim-bonus" step="1000" class="sim-number-input" value="10000">
+                                </div>
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-oneoff">Aporte Extra Único (R$)</label>
+                                    <input type="number" id="adv-sim-oneoff" step="5000" class="sim-number-input" value="0">
+                                </div>
+                            </div>
+                            
+                            <div class="simulator-form-group">
+                                <label for="adv-sim-oneoff-year">Ano do Aporte Extra Único (1 a 40)</label>
+                                <input type="number" id="adv-sim-oneoff-year" min="1" max="40" class="sim-number-input" value="5">
+                            </div>
+                        </div>
+
+                        <div class="panel-section">
+                            <h3 class="section-title"><i class="fa-solid fa-bullseye"></i> Metas de Independência Financeira</h3>
+                            
+                            <div class="control-grid-2">
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-target-wealth">Meta de Patrimônio (R$)</label>
+                                    <input type="number" id="adv-sim-target-wealth" step="50000" class="sim-number-input" value="1500000">
+                                </div>
+                                <div class="simulator-form-group">
+                                    <label for="adv-sim-target-income">Renda Desejada na Aposentadoria (R$/mês)</label>
+                                    <input type="number" id="adv-sim-target-income" step="500" class="sim-number-input" value="8000">
+                                </div>
+                            </div>
+
+                            <div class="control-row-slider">
+                                <div class="slider-header">
+                                    <label for="adv-sim-swr">Taxa de Retirada Segura (SWR): <span id="adv-sim-swr-val" class="slider-val">4.0% ao ano</span></label>
+                                </div>
+                                <input type="range" id="adv-sim-swr" min="2" max="8" step="0.2" value="4.0" class="sim-slider">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Column 2: Dashboard Results -->
+                    <div class="adv-sim-results-panel">
+                        <div class="adv-sim-metrics-grid">
+                            <div class="adv-metric-card highlight">
+                                <span class="adv-metric-title">Patrimônio Final Bruto</span>
+                                <span class="adv-metric-value" id="adv-result-gross">R$ 0,00</span>
+                                <span class="adv-metric-desc">Em valor nominal futuro</span>
+                            </div>
+                            <div class="adv-metric-card shadow">
+                                <span class="adv-metric-title">Patrimônio Real (Poder de Compra)</span>
+                                <span class="adv-metric-value text-green" id="adv-result-real">R$ 0,00</span>
+                                <span class="adv-metric-desc">Descontado os efeitos da inflação</span>
+                            </div>
+                            <div class="adv-metric-card">
+                                <span class="adv-metric-title">Total Investido</span>
+                                <span class="adv-metric-value" id="adv-result-invested">R$ 0,00</span>
+                                <span class="adv-metric-desc" id="adv-result-invested-pct">0% do total</span>
+                            </div>
+                            <div class="adv-metric-card">
+                                <span class="adv-metric-title">Juros Acumulados</span>
+                                <span class="adv-metric-value text-gold" id="adv-result-interest">R$ 0,00</span>
+                                <span class="adv-metric-desc" id="adv-result-interest-pct">0% do total</span>
+                            </div>
+                            <div class="adv-metric-card col-span-2 clickable-card" id="adv-income-card">
+                                <div class="metric-flex-row">
+                                    <div>
+                                        <span class="adv-metric-title">Renda Passiva Mensal Gerada</span>
+                                        <span class="adv-metric-value text-blue" id="adv-result-passive-income">R$ 0,00</span>
+                                        <span class="adv-metric-desc" id="adv-result-passive-desc">Usando taxa de retirada de 4.0% a.a.</span>
+                                    </div>
+                                    <div class="goal-status-box" id="adv-goal-status">
+                                        <i class="fa-solid fa-hourglass-half"></i> Projeção...
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Projections Chart -->
+                        <div class="chart-box">
+                            <div class="chart-header">
+                                <h3>Crescimento Patrimonial ao Longo do Tempo</h3>
+                                <span class="chart-subtitle">Bruto vs Poder de Compra Real vs Total de Aportes</span>
+                            </div>
+                            <div class="chart-wrapper adv-sim-chart-wrapper">
+                                <canvas id="chart-adv-projection"></canvas>
+                            </div>
+                        </div>
+
+                        <!-- Pie breakdown & Analysis Summary -->
+                        <div class="analysis-row">
+                            <div class="breakdown-card">
+                                <h4>Composição do Patrimônio</h4>
+                                <div class="chart-wrapper doughnut-wrapper">
+                                    <canvas id="chart-adv-breakdown"></canvas>
+                                </div>
+                            </div>
+                            <div class="summary-card">
+                                <h4>Resumo da Viabilidade Financeira</h4>
+                                <div class="summary-content" id="adv-sim-text-summary">
+                                    <!-- Dynamic text evaluation -->
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
