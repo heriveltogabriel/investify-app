@@ -498,13 +498,8 @@ function renderKPIs() {
     document.getElementById('kpi-savings').textContent = formatBRL(savings);
     
     const savingsRateEl = document.getElementById('kpi-savings-rate');
-    if (savingsRate >= 0) {
-        savingsRateEl.className = 'kpi-trend positive';
-        savingsRateEl.innerHTML = `<i class="fa-solid fa-face-smile"></i> Taxa de poupança: ${savingsRate.toFixed(1)}% da receita`;
-    } else {
-        savingsRateEl.className = 'kpi-trend negative';
-        savingsRateEl.innerHTML = `<i class="fa-solid fa-face-frown"></i> Déficit de despesas de ${Math.abs(savingsRate).toFixed(1)}%`;
-    }
+    savingsRateEl.className = 'kpi-trend positive';
+    savingsRateEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Rendimentos + Aporte`;
 }
 
 // Render Dashboard Charts
