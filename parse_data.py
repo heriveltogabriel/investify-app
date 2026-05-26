@@ -3,8 +3,8 @@ import json
 import os
 import datetime
 
-EXCEL_PATH = '/Users/hgs/Documents/investimento/Investimentos.xlsx'
-JSON_PATH = '/Users/hgs/Documents/investimento/db.json'
+EXCEL_PATH = os.path.join(os.path.dirname(__file__), 'Investimentos.xlsx')
+JSON_PATH = os.path.join(os.path.dirname(__file__), 'db.json')
 
 def parse_double_col_year(ws):
     """
