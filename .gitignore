@@ -1,0 +1,18 @@
+# Ambientes virtuais Python
+venv/
+env/
+.env
+
+# Arquivos de cache do Python
+__pycache__/
+*.pyc
+
+# Dados Pessoais (NÃO ENVIAR PARA O GITHUB)
+db.json
+Investimentos.xlsx
+Investimentos_Exportado.xlsx
+Investimentos_Online.xlsx
+*.bak
+
+# Arquivos do sistema operacional
+.DS_Store
