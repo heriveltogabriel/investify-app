@@ -19,10 +19,12 @@ def load_db():
             parse_data.main()
         except Exception as e:
             print("Error parsing Excel:", e)
-            return {}
             
-    with open(JSON_PATH, 'r', encoding='utf-8') as f:
-        return json.load(f)
+    try:
+        with open(JSON_PATH, 'r', encoding='utf-8') as f:
+            return json.load(f)
+    except FileNotFoundError:
+        return {}
 
 def save_db(data):
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
