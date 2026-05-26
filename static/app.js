@@ -185,7 +185,7 @@ function updateHeaderTitle() {
         titleEl.textContent = 'Análise de Receitas';
         subtitleEl.textContent = 'Acompanhamento detalhado das suas entradas financeiras.';
         if (yearWrapper) yearWrapper.style.display = 'flex';
-        if (monthWrapper) monthWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'flex';
     } else if (activeTab === 'fixed-expenses') {
         titleEl.textContent = 'Análise de Gastos Fixos';
         subtitleEl.textContent = 'Acompanhamento detalhado e histórico de despesas fixas.';
@@ -2102,6 +2102,21 @@ function renderIncomesTab() {
     const avgIncome = activeMonthsWithIncomeCount > 0 ? (totalIncomeYear / activeMonthsWithIncomeCount) : 0;
     const avgSavingsRate = activeMonthsWithIncomeCount > 0 ? (totalSavingsRate / activeMonthsWithIncomeCount) : 0;
     
+    // Calculate Monthly Salary and Rent for the selected reference month
+    let monthSalaryVal = 0;
+    let monthRentVal = 0;
+    const refMonthStr = selectedMonth || latestMonth.toString();
+    const refMonthData = yearData[refMonthStr];
+    
+    if (refMonthData && refMonthData.incomes) {
+        const sal15 = refMonthData.incomes['salario_dia_15'] || 0;
+        const sal30 = refMonthData.incomes['salario_dia_30'] || 0;
+        const sal = refMonthData.incomes['salario'] || 0;
+        monthSalaryVal = (sal15 || sal30) ? (sal15 + sal30) : sal;
+        monthRentVal = refMonthData.incomes['aluguel'] || 0;
+    }
+    const refMonthName = monthNames[parseInt(refMonthStr) - 1] || 'N/A';
+
     // Set KPI Text
     document.getElementById('kpi-inc-total').textContent = formatBRL(totalIncomeYear);
     document.getElementById('kpi-inc-total-desc').innerHTML = `<i class="fa-solid fa-calendar-days"></i> Acumulado em ${selectedYear}`;
@@ -2109,19 +2124,11 @@ function renderIncomesTab() {
     document.getElementById('kpi-inc-average').textContent = formatBRL(avgIncome);
     document.getElementById('kpi-inc-average-desc').textContent = `Média mensal nos meses ativos`;
     
-    document.getElementById('kpi-inc-highest').textContent = formatBRL(highestIncomeVal);
-    document.getElementById('kpi-inc-highest-month').innerHTML = `<i class="fa-solid fa-trophy"></i> Atingido em ${highestIncomeMonthName}`;
+    document.getElementById('kpi-inc-salary-month').textContent = formatBRL(monthSalaryVal);
+    document.getElementById('kpi-inc-salary-month-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
     
-    const savingsRateEl = document.getElementById('kpi-inc-savings-rate');
-    savingsRateEl.textContent = `${avgSavingsRate.toFixed(1)}%`;
-    const savingsDescEl = document.getElementById('kpi-inc-savings-desc');
-    if (avgSavingsRate >= 0) {
-        savingsDescEl.innerHTML = `<i class="fa-solid fa-face-smile"></i> Sobra líquida média do ano`;
-        savingsRateEl.className = 'kpi-value text-success';
-    } else {
-        savingsDescEl.innerHTML = `<i class="fa-solid fa-face-frown"></i> Média sob déficit no ano`;
-        savingsRateEl.className = 'kpi-value text-danger';
-    }
+    document.getElementById('kpi-inc-rent-month').textContent = formatBRL(monthRentVal);
+    document.getElementById('kpi-inc-rent-month-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
     
     // Render Evolution Chart (Stacked Bar)
     if (chartIncEvolution) chartIncEvolution.destroy();
