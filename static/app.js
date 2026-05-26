@@ -190,7 +190,7 @@ function updateHeaderTitle() {
         titleEl.textContent = 'Análise de Gastos Fixos';
         subtitleEl.textContent = 'Acompanhamento detalhado e histórico de despesas fixas.';
         if (yearWrapper) yearWrapper.style.display = 'flex';
-        if (monthWrapper) monthWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'flex';
     } else if (activeTab === 'card-expenses') {
         titleEl.textContent = 'Análise de Cartões de Crédito';
         subtitleEl.textContent = 'Acompanhamento detalhado de despesas de cartões de crédito.';
@@ -2307,30 +2307,42 @@ function renderFixedExpensesTab() {
     }
     
     const avgFixed = monthsActive > 0 ? (totalFixedYear / monthsActive) : 0;
+
+    // Calculate values for the selected reference month
+    let monthFixedTotal = 0;
+    let monthHighestFixedVal = 0;
+    let monthHighestFixedName = 'N/A';
+    
+    const refMonthStr = selectedMonth || latestMonth.toString();
+    const refMonthData = yearData[refMonthStr];
+    
+    if (refMonthData && refMonthData.expenses?.fixed) {
+        for (const [key, val] of Object.entries(refMonthData.expenses.fixed)) {
+            const expenseVal = parseFloat(val) || 0;
+            monthFixedTotal += expenseVal;
+            if (expenseVal > monthHighestFixedVal) {
+                monthHighestFixedVal = expenseVal;
+                monthHighestFixedName = formatLabel(key);
+            }
+        }
+    }
+    const refMonthName = monthNames[parseInt(refMonthStr) - 1] || 'N/A';
     
     // Set KPI Text
     document.getElementById('kpi-fixed-total').textContent = formatBRL(totalFixedYear);
     document.getElementById('kpi-fixed-total-desc').innerHTML = `<i class="fa-solid fa-calendar-days"></i> Acumulado em ${selectedYear}`;
     
+    // Total dos Gastos do mês
+    document.getElementById('kpi-fixed-month-total').textContent = formatBRL(monthFixedTotal);
+    document.getElementById('kpi-fixed-month-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Referente a ${refMonthName}`;
+    
+    // Maior Gasto do Mês
+    document.getElementById('kpi-fixed-month-highest').textContent = formatBRL(monthHighestFixedVal);
+    document.getElementById('kpi-fixed-month-highest-desc').innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> ${monthHighestFixedName} em ${refMonthName}`;
+    
+    // Média Mensal
     document.getElementById('kpi-fixed-average').textContent = formatBRL(avgFixed);
     document.getElementById('kpi-fixed-average-desc').textContent = `Média mensal nos meses ativos`;
-    
-    document.getElementById('kpi-fixed-highest').textContent = formatBRL(highestFixedVal);
-    document.getElementById('kpi-fixed-highest-month').innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> Pico em ${highestFixedMonthName}`;
-    
-    // Find the most expensive category (cumulative)
-    let highestCatName = 'N/A';
-    let highestCatVal = 0;
-    fixedExpenseKeys.forEach(key => {
-        const catTotal = monthlyFixedData[key].reduce((acc, v) => acc + v, 0);
-        if (catTotal > highestCatVal) {
-            highestCatVal = catTotal;
-            highestCatName = formatLabel(key);
-        }
-    });
-    
-    document.getElementById('kpi-fixed-categories-count').textContent = fixedExpenseKeys.length;
-    document.getElementById('kpi-fixed-categories-desc').textContent = `Categoria principal: ${highestCatName}`;
     
     // Render Evolution Chart (Stacked Bar)
     if (chartFixedEvolution) chartFixedEvolution.destroy();
