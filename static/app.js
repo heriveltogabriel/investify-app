@@ -453,6 +453,31 @@ function renderKPIs() {
     document.getElementById('kpi-aportes').textContent = formatBRL(totalAportes);
     document.getElementById('kpi-aportes-count').textContent = `Realizados em ${countAportesMonths} meses este ano`;
 
+    // 3.1 Aporte do Mês
+    let monthAporte = 0;
+    if (latestMonth !== -1) {
+        const mData = financialData[selectedYear]?.[latestMonth.toString()];
+        if (mData && mData.investments) {
+            for (const bank in mData.investments) {
+                const item = mData.investments[bank];
+                if (bank === 'outros') {
+                    for (const asset in item) {
+                        monthAporte += (item[asset].aporte || 0);
+                    }
+                } else {
+                    monthAporte += (item.aporte || 0);
+                }
+            }
+        }
+    }
+    document.getElementById('kpi-month-aporte').textContent = formatBRL(monthAporte);
+    const monthAporteDescEl = document.getElementById('kpi-month-aporte-desc');
+    if (latestMonth !== -1) {
+        monthAporteDescEl.textContent = `Aportado em ${monthNames[latestMonth - 1]}`;
+    } else {
+        monthAporteDescEl.textContent = `Nenhum mês ativo`;
+    }
+
     // 4. Economia (Sobra do último mês ativo)
     let savings = 0;
     let savingsRate = 0;
