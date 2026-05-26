@@ -195,7 +195,7 @@ function updateHeaderTitle() {
         titleEl.textContent = 'Análise de Cartões de Crédito';
         subtitleEl.textContent = 'Acompanhamento detalhado de despesas de cartões de crédito.';
         if (yearWrapper) yearWrapper.style.display = 'flex';
-        if (monthWrapper) monthWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'flex';
     } else if (activeTab === 'entries') {
         titleEl.textContent = 'Lançamentos Mensais';
         subtitleEl.textContent = 'Gerencie entradas, saídas fixas, faturas e investimentos.';
@@ -2502,43 +2502,46 @@ function renderCardExpensesTab() {
     document.getElementById('kpi-card-total').textContent = formatBRL(totalCardYear);
     document.getElementById('kpi-card-total-desc').innerHTML = `<i class="fa-solid fa-calendar-days"></i> Acumulado em ${selectedYear}`;
     
-    document.getElementById('kpi-card-average').textContent = formatBRL(avgCard);
-    document.getElementById('kpi-card-average-desc').textContent = `Média mensal nos meses ativos`;
+    // Calculate values for the selected reference month
+    const refMonthStr = selectedMonth || (latestMonth !== -1 ? latestMonth.toString() : "1");
+    const refMonthData = yearData[refMonthStr];
+    const refMonthName = monthNames[parseInt(refMonthStr) - 1] || 'N/A';
     
-    document.getElementById('kpi-card-highest').textContent = formatBRL(highestCardVal);
-    document.getElementById('kpi-card-highest-month').innerHTML = `<i class="fa-solid fa-credit-card"></i> Pico em ${highestCardMonthName}`;
-    
-    // Fetch current month's bills for Mastercard Itaú and C6 Visa
     let itauVal = 0;
     let c6Val = 0;
+    let bbVal = 0;
     
-    if (latestMonth !== -1) {
-        itauVal = monthlyCardData['mastercard_itau']?.[latestMonth - 1] || 0;
-        c6Val = monthlyCardData['visa_c6']?.[latestMonth - 1] || 0;
+    if (refMonthData && refMonthData.expenses?.cards) {
+        itauVal = parseFloat(refMonthData.expenses.cards['mastercard_itau']) || 0;
+        c6Val = parseFloat(refMonthData.expenses.cards['visa_c6']) || 0;
+        bbVal = parseFloat(refMonthData.expenses.cards['elo_bb']) || 0;
     }
+    const monthCardsTotal = itauVal + c6Val + bbVal;
     
-    const itauEl = document.getElementById('kpi-card-itau');
-    const itauDescEl = document.getElementById('kpi-card-itau-desc');
-    const c6El = document.getElementById('kpi-card-c6');
-    const c6DescEl = document.getElementById('kpi-card-c6-desc');
-    
+    // Set Mastercard Itaú month value
+    const itauEl = document.getElementById('kpi-card-itau-month');
+    const itauDescEl = document.getElementById('kpi-card-itau-month-desc');
     if (itauEl) itauEl.textContent = formatBRL(itauVal);
-    if (itauDescEl) {
-        if (latestMonth !== -1) {
-            itauDescEl.textContent = `Fatura de ${monthNames[latestMonth - 1]}`;
-        } else {
-            itauDescEl.textContent = `Sem fatura ativa`;
-        }
-    }
+    if (itauDescEl) itauDescEl.innerHTML = `<i class="fa-solid fa-clock"></i> Fatura de ${refMonthName}`;
     
+    // Set C6 Visa month value
+    const c6El = document.getElementById('kpi-card-c6-month');
+    const c6DescEl = document.getElementById('kpi-card-c6-month-desc');
     if (c6El) c6El.textContent = formatBRL(c6Val);
-    if (c6DescEl) {
-        if (latestMonth !== -1) {
-            c6DescEl.textContent = `Fatura de ${monthNames[latestMonth - 1]}`;
-        } else {
-            c6DescEl.textContent = `Sem fatura ativa`;
-        }
-    }
+    if (c6DescEl) c6DescEl.innerHTML = `<i class="fa-solid fa-clock"></i> Fatura de ${refMonthName}`;
+    
+    // Set BB Elo month value
+    const bbEl = document.getElementById('kpi-card-bb-month');
+    const bbDescEl = document.getElementById('kpi-card-bb-month-desc');
+    if (bbEl) bbEl.textContent = formatBRL(bbVal);
+    if (bbDescEl) bbDescEl.innerHTML = `<i class="fa-solid fa-clock"></i> Fatura de ${refMonthName}`;
+    
+    // Set Total Monthly Cards value
+    const totalMonthEl = document.getElementById('kpi-card-month-total');
+    const totalMonthDescEl = document.getElementById('kpi-card-month-total-desc');
+    if (totalMonthEl) totalMonthEl.textContent = formatBRL(monthCardsTotal);
+    if (totalMonthDescEl) totalMonthDescEl.innerHTML = `<i class="fa-solid fa-calculator"></i> Somatório de ${refMonthName}`;
+
     
     // Render Evolution Chart (Grouped Bars)
     if (chartCardEvolution) chartCardEvolution.destroy();
