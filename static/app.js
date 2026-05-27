@@ -333,18 +333,14 @@ function getNetworthForMonth(year, monthStr) {
     
     let sum = 0;
     if (mData && mData.investments) {
-        if (mData.total_carteira !== undefined) {
-            sum = mData.total_carteira;
-        } else {
-            for (const bank in mData.investments) {
-                const item = mData.investments[bank];
-                if (bank === 'outros') {
-                    for (const asset in item) {
-                        sum += (item[asset].saldo || 0);
-                    }
-                } else {
-                    sum += (item.cdb || 0) + (item.aporte || 0);
+        for (const bank in mData.investments) {
+            const item = mData.investments[bank];
+            if (bank === 'outros') {
+                for (const asset in item) {
+                    sum += (parseFloat(item[asset].saldo) || 0);
                 }
+            } else {
+                sum += (parseFloat(item.cdb) || 0) + (parseFloat(item.aporte) || 0);
             }
         }
     }
@@ -641,7 +637,7 @@ function renderCharts() {
                     }
                 } else {
                     const bankData = testData.investments[bank];
-                    sum += bankData.total !== undefined ? bankData.total : (bankData.cdb || 0) + (bankData.aporte || 0);
+                    sum += (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0);
                 }
             }
             if (sum > 0) {
@@ -664,7 +660,7 @@ function renderCharts() {
         for (const bank in mData.investments) {
             if (bank !== 'outros') {
                 const item = mData.investments[bank];
-                const balance = item.total !== undefined ? item.total : (item.cdb || 0) + (item.aporte || 0);
+                const balance = (parseFloat(item.cdb) || 0) + (parseFloat(item.aporte) || 0);
                 if (balance > 0) {
                     allocationData.push(balance);
                     allocationLabels.push(bank.toUpperCase());
