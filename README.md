@@ -1,5 +1,7 @@
 # Investify
 
+![Dashboard Preview](dashboard_preview.png)
+
 Investify é uma aplicação web completa voltada para o gerenciamento de finanças pessoais, controle de gastos fixos, faturas de cartão de crédito e acompanhamento consolidado de investimentos (CDB, Aportes, Juros/Rendimentos) dos bancos Itaú, Banco do Brasil e C6 Bank.
 
 ## Principais Funcionalidades
