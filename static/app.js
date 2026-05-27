@@ -27,6 +27,7 @@ let chartAdvProjection = null;
 let chartAdvBreakdown = null;
 let chartQuickConfrontation = null;
 let chartQuickEvolution = null;
+let chartEntriesAportes = null;
 
 // Month mappings
 const monthNames = [
@@ -128,6 +129,10 @@ function initApp() {
     // Recalculate preview on any entry-form input change (dynamic or static)
     document.getElementById('entry-form').addEventListener('input', (e) => {
         if (e.target.tagName === 'INPUT') {
+            const inputId = e.target.id;
+            if (inputId && (inputId.includes('aporte') || inputId.includes('juros'))) {
+                updateCalculatedSaldos();
+            }
             calculateFormPreview();
         }
     });
@@ -1155,6 +1160,8 @@ function populateFormWithExistingData(showToastSuccess = true) {
         document.getElementById('inv-c6-juros').value = "";
         
         calculateFormPreview();
+        updateCalculatedSaldos();
+        renderEntriesAportesChart(year);
         return;
     }
     
@@ -1200,6 +1207,8 @@ function populateFormWithExistingData(showToastSuccess = true) {
     });
     
     calculateFormPreview();
+    updateCalculatedSaldos();
+    renderEntriesAportesChart(year);
     if (showToastSuccess) {
         showToast('Sucesso', 'Dados do mês carregados com sucesso!', 'success');
     }
@@ -3321,4 +3330,125 @@ function renderQuickView() {
     
     tableEl.appendChild(tbody);
 }
+
+function getPreviousMonthSaldo(year, monthStr, bankKey) {
+    const m = parseInt(monthStr);
+    if (m > 1) {
+        const prevMonthStr = (m - 1).toString();
+        const prevData = financialData[year]?.[prevMonthStr];
+        if (prevData && prevData.investments && prevData.investments[bankKey]) {
+            return parseFloat(prevData.investments[bankKey].cdb) || 0;
+        }
+    } else {
+        // Janeiro: buscar do ano anterior, mês 12
+        const prevYearStr = (parseInt(year) - 1).toString();
+        const prevData = financialData[prevYearStr]?.['12'];
+        if (prevData && prevData.investments && prevData.investments[bankKey]) {
+            return parseFloat(prevData.investments[bankKey].cdb) || 0;
+        }
+    }
+    return 0;
+}
+
+function updateCalculatedSaldos() {
+    const year = document.getElementById('entry-year').value;
+    const month = document.getElementById('entry-month').value;
+    
+    const prevItau = getPreviousMonthSaldo(year, month, 'itau');
+    const prevBB = getPreviousMonthSaldo(year, month, 'bb');
+    const prevC6 = getPreviousMonthSaldo(year, month, 'c6');
+    
+    const itauAporte = parseFloat(document.getElementById('inv-itau-aporte').value) || 0;
+    const itauJuros = parseFloat(document.getElementById('inv-itau-juros').value) || 0;
+    document.getElementById('inv-itau-cdb').value = (prevItau + itauAporte + itauJuros).toFixed(2);
+    
+    const bbAporte = parseFloat(document.getElementById('inv-bb-aporte').value) || 0;
+    const bbJuros = parseFloat(document.getElementById('inv-bb-juros').value) || 0;
+    document.getElementById('inv-bb-cdb').value = (prevBB + bbAporte + bbJuros).toFixed(2);
+    
+    const c6Aporte = parseFloat(document.getElementById('inv-c6-aporte').value) || 0;
+    const c6Juros = parseFloat(document.getElementById('inv-c6-juros').value) || 0;
+    document.getElementById('inv-c6-cdb').value = (prevC6 + c6Aporte + c6Juros).toFixed(2);
+}
+
+function renderEntriesAportesChart(year) {
+    const yearData = financialData[year] || {};
+    const monthlyApList = Array(12).fill(0);
+    let totalApYear = 0;
+    
+    for (let m = 1; m <= 12; m++) {
+        const mStr = m.toString();
+        const mData = yearData[mStr];
+        if (mData && mData.investments) {
+            let mAp = 0;
+            for (const bank in mData.investments) {
+                const item = mData.investments[bank];
+                if (bank === 'outros') {
+                    for (const asset in item) {
+                        mAp += (item[asset].aporte || 0);
+                    }
+                } else {
+                    mAp += (item.aporte || 0);
+                }
+            }
+            monthlyApList[m - 1] = mAp;
+            totalApYear += mAp;
+        }
+    }
+    
+    // Update badge text
+    const badge = document.getElementById('entries-aportes-total-badge');
+    if (badge) {
+        badge.textContent = `Total no Ano: ${formatBRL(totalApYear)}`;
+    }
+    
+    // Render Chart
+    if (chartEntriesAportes) chartEntriesAportes.destroy();
+    
+    const canvas = document.getElementById('chart-entries-aportes');
+    if (!canvas) return;
+    
+    const ctx = canvas.getContext('2d');
+    chartEntriesAportes = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: monthNames,
+            datasets: [{
+                label: 'Aportes Mensais',
+                data: monthlyApList,
+                backgroundColor: 'rgba(99, 102, 241, 0.65)',
+                hoverBackgroundColor: 'rgba(99, 102, 241, 0.85)',
+                borderColor: '#6366f1',
+                borderWidth: 1,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return formatBRL(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: { ticks: { color: '#9ca3af', font: { family: 'Inter', size: 10 } } },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 9 },
+                        callback: function(value) { return formatBRL(value); }
+                    }
+                }
+            }
+        }
+    });
+}
+
 

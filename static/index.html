@@ -703,13 +703,24 @@
                                 <h2>Investimentos (Saldos & Aportes)</h2>
                             </div>
                             
+                            <!-- Monthly Aportes Summary and Chart -->
+                            <div class="entries-aportes-analysis-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; margin-bottom: 25px;">
+                                <div class="aportes-analysis-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                                    <h3 style="font-family: var(--font-heading); font-size: 14px; font-weight: 700; margin: 0;">Histórico de Aportes Mês a Mês</h3>
+                                    <span class="analysis-total" id="entries-aportes-total-badge" style="font-size: 12px; font-weight: 600; color: var(--accent-color); background: rgba(99, 102, 241, 0.12); padding: 4px 10px; border-radius: 8px;">Total no Ano: R$ 0,00</span>
+                                </div>
+                                <div class="chart-wrapper entries-aportes-chart-wrapper" style="height: 160px; position: relative;">
+                                    <canvas id="chart-entries-aportes"></canvas>
+                                </div>
+                            </div>
+                            
                             <!-- Itaú -->
                             <div class="bank-entry-group">
                                 <h3>Itaú CDB</h3>
                                 <div class="form-group-row">
                                     <div class="form-group">
-                                        <label for="inv-itau-cdb">Saldo CDB (R$)</label>
-                                        <input type="number" step="0.01" id="inv-itau-cdb" placeholder="0.00" value="0.00">
+                                        <label for="inv-itau-cdb">Saldo CDB (R$) <span style="font-size:10px; color:var(--color-text-secondary); font-weight:normal;">(Calculado automaticamente)</span></label>
+                                        <input type="number" step="0.01" id="inv-itau-cdb" placeholder="0.00" value="0.00" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed;">
                                     </div>
                                     <div class="form-group">
                                         <label for="inv-itau-aporte">Aporte (R$)</label>
@@ -735,8 +746,8 @@
                                 <h3>Banco do Brasil CDB</h3>
                                 <div class="form-group-row">
                                     <div class="form-group">
-                                        <label for="inv-bb-cdb">Saldo CDB (R$)</label>
-                                        <input type="number" step="0.01" id="inv-bb-cdb" placeholder="0.00" value="0.00">
+                                        <label for="inv-bb-cdb">Saldo CDB (R$) <span style="font-size:10px; color:var(--color-text-secondary); font-weight:normal;">(Calculado automaticamente)</span></label>
+                                        <input type="number" step="0.01" id="inv-bb-cdb" placeholder="0.00" value="0.00" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed;">
                                     </div>
                                     <div class="form-group">
                                         <label for="inv-bb-aporte">Aporte (R$)</label>
@@ -761,8 +772,8 @@
                                 <h3>C6 Bank CDB</h3>
                                 <div class="form-group-row">
                                     <div class="form-group">
-                                        <label for="inv-c6-cdb">Saldo CDB (R$)</label>
-                                        <input type="number" step="0.01" id="inv-c6-cdb" placeholder="0.00" value="0.00">
+                                        <label for="inv-c6-cdb">Saldo CDB (R$) <span style="font-size:10px; color:var(--color-text-secondary); font-weight:normal;">(Calculado automaticamente)</span></label>
+                                        <input type="number" step="0.01" id="inv-c6-cdb" placeholder="0.00" value="0.00" readonly style="background: rgba(255,255,255,0.02); color: rgba(255,255,255,0.4); border-color: rgba(255,255,255,0.05); cursor: not-allowed;">
                                     </div>
                                     <div class="form-group">
                                         <label for="inv-c6-aporte">Aporte (R$)</label>
