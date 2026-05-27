@@ -129,10 +129,6 @@ function initApp() {
     // Recalculate preview on any entry-form input change (dynamic or static)
     document.getElementById('entry-form').addEventListener('input', (e) => {
         if (e.target.tagName === 'INPUT') {
-            const inputId = e.target.id;
-            if (inputId && (inputId.includes('aporte') || inputId.includes('juros'))) {
-                updateCalculatedSaldos();
-            }
             calculateFormPreview();
         }
     });
@@ -1160,7 +1156,6 @@ function populateFormWithExistingData(showToastSuccess = true) {
         document.getElementById('inv-c6-juros').value = "";
         
         calculateFormPreview();
-        updateCalculatedSaldos();
         renderEntriesAportesChart(year);
         return;
     }
@@ -1207,7 +1202,6 @@ function populateFormWithExistingData(showToastSuccess = true) {
     });
     
     calculateFormPreview();
-    updateCalculatedSaldos();
     renderEntriesAportesChart(year);
     if (showToastSuccess) {
         showToast('Sucesso', 'Dados do mês carregados com sucesso!', 'success');
@@ -3329,46 +3323,6 @@ function renderQuickView() {
     tbody.appendChild(trTotal);
     
     tableEl.appendChild(tbody);
-}
-
-function getPreviousMonthSaldo(year, monthStr, bankKey) {
-    const m = parseInt(monthStr);
-    if (m > 1) {
-        const prevMonthStr = (m - 1).toString();
-        const prevData = financialData[year]?.[prevMonthStr];
-        if (prevData && prevData.investments && prevData.investments[bankKey]) {
-            return parseFloat(prevData.investments[bankKey].cdb) || 0;
-        }
-    } else {
-        // Janeiro: buscar do ano anterior, mês 12
-        const prevYearStr = (parseInt(year) - 1).toString();
-        const prevData = financialData[prevYearStr]?.['12'];
-        if (prevData && prevData.investments && prevData.investments[bankKey]) {
-            return parseFloat(prevData.investments[bankKey].cdb) || 0;
-        }
-    }
-    return 0;
-}
-
-function updateCalculatedSaldos() {
-    const year = document.getElementById('entry-year').value;
-    const month = document.getElementById('entry-month').value;
-    
-    const prevItau = getPreviousMonthSaldo(year, month, 'itau');
-    const prevBB = getPreviousMonthSaldo(year, month, 'bb');
-    const prevC6 = getPreviousMonthSaldo(year, month, 'c6');
-    
-    const itauAporte = parseFloat(document.getElementById('inv-itau-aporte').value) || 0;
-    const itauJuros = parseFloat(document.getElementById('inv-itau-juros').value) || 0;
-    document.getElementById('inv-itau-cdb').value = (prevItau + itauAporte + itauJuros).toFixed(2);
-    
-    const bbAporte = parseFloat(document.getElementById('inv-bb-aporte').value) || 0;
-    const bbJuros = parseFloat(document.getElementById('inv-bb-juros').value) || 0;
-    document.getElementById('inv-bb-cdb').value = (prevBB + bbAporte + bbJuros).toFixed(2);
-    
-    const c6Aporte = parseFloat(document.getElementById('inv-c6-aporte').value) || 0;
-    const c6Juros = parseFloat(document.getElementById('inv-c6-juros').value) || 0;
-    document.getElementById('inv-c6-cdb').value = (prevC6 + c6Aporte + c6Juros).toFixed(2);
 }
 
 function renderEntriesAportesChart(year) {
