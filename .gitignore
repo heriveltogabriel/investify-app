@@ -16,3 +16,6 @@ Investimentos_Online.xlsx
 
 # Arquivos do sistema operacional
 .DS_Store
+
+# Configurações locais
+config.json

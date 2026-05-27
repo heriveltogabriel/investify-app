@@ -1,15 +1,28 @@
-from flask import Flask, jsonify, request, send_from_directory
+from flask import Flask, jsonify, request, send_from_directory, session, redirect, url_for, render_template
 import json
 import os
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
+from datetime import timedelta
 
 app = Flask(__name__, static_folder='static', static_url_path='')
+app.secret_key = 'investify-session-secret-key-2026'
+app.permanent_session_lifetime = timedelta(days=7)
 
 JSON_PATH = os.path.join(os.path.dirname(__file__), 'db.json')
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), 'Investimentos.xlsx')
 EXPORT_PATH = os.path.join(os.path.dirname(__file__), 'Investimentos_Exportado.xlsx')
+CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
+
+def load_credentials():
+    if os.path.exists(CONFIG_PATH):
+        try:
+            with open(CONFIG_PATH, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {"username": "admin", "password": "change-me-on-first-login"}
 
 def load_db():
     if not os.path.exists(JSON_PATH):
@@ -30,9 +43,45 @@ def save_db(data):
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+@app.before_request
+def check_authentication():
+    allowed_routes = ['login', 'do_login', 'static']
+    if request.endpoint in allowed_routes or not request.endpoint:
+        return
+    
+    if 'logged_in' not in session:
+        if request.path.startswith('/api/'):
+            return jsonify({"error": "Sessão expirada ou não autenticada."}), 401
+        return redirect(url_for('login'))
+
 @app.route('/')
 def index():
-    return send_from_directory('static', 'index.html')
+    return render_template('index.html')
+
+@app.route('/login')
+def login():
+    if 'logged_in' in session:
+        return redirect(url_for('index'))
+    return send_from_directory('static', 'login.html')
+
+@app.route('/api/login', methods=['POST'])
+def do_login():
+    payload = request.json or {}
+    username = payload.get('username')
+    password = payload.get('password')
+    
+    creds = load_credentials()
+    if username == creds.get('username') and password == creds.get('password'):
+        session['logged_in'] = True
+        session.permanent = True
+        return jsonify({"success": True})
+    
+    return jsonify({"error": "Usuário ou senha incorretos."}), 401
+
+@app.route('/logout')
+def logout():
+    session.pop('logged_in', None)
+    return redirect(url_for('login'))
 
 @app.route('/api/data', methods=['GET'])
 def get_data():

@@ -1,3 +1,13 @@
+// Global fetch interceptor to handle 401 (session timeout/unauthorized)
+const originalFetch = window.fetch;
+window.fetch = async function(...args) {
+    const response = await originalFetch.apply(this, args);
+    if (response.status === 401 && !response.url.includes('/api/login')) {
+        window.location.href = '/login';
+    }
+    return response;
+};
+
 // State variables
 let financialData = {};
 let activeTab = 'dashboard';
@@ -151,6 +161,14 @@ function initApp() {
 
     // Export Excel button listener
     document.getElementById('btn-export-excel').addEventListener('click', exportToExcel);
+
+    // Logout button listener
+    const logoutBtn = document.getElementById('btn-logout');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', () => {
+            window.location.href = '/logout';
+        });
+    }
 
     // Google Sheets Sync button listener
     document.getElementById('btn-sync-gsheet').addEventListener('click', syncGoogleSheets);
