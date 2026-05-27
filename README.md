@@ -57,11 +57,36 @@ Investify é uma aplicação web completa voltada para o gerenciamento de finan�
 
 ---
 
-## ☁️ Instalação no Servidor Remoto (Oracle Linux)
+## ☁️ Instalação no Servidor Remoto
 
-As etapas a seguir descrevem como implantar a aplicação de maneira persistente e segura em uma instância do Oracle Cloud Infrastructure (OCI) rodando Oracle Linux.
+As etapas a seguir descrevem como implantar a aplicação de maneira persistente e segura em uma instância de servidor na nuvem (como Oracle Linux no OCI ou Ubuntu).
 
-### 1. Criar Memória Virtual (Swap File)
+### Opção 1: Instalação Automatizada por Script (Recomendado)
+
+O projeto possui um script de configuração completo (`setup_investify.sh`) que automatiza todos os passos de implantação, incluindo a criação de swap file de 2GB (para servidores de 1GB de RAM), clone do projeto, instalação do Python 3.9, criação do ambiente virtual, instalação de dependências, abertura do firewall e configuração/inicialização automática do serviço Systemd.
+
+Para usá-lo, conecte via SSH em seu servidor remoto e execute:
+
+```bash
+# Baixar o script de instalação diretamente do repositório público
+curl -O https://raw.githubusercontent.com/heriveltogabriel/investify-app/main/setup_investify.sh
+
+# Dar permissão de execução
+chmod +x setup_investify.sh
+
+# Executar como root (sudo)
+sudo ./setup_investify.sh
+```
+
+A aplicação será configurada e iniciada automaticamente no diretório `/opt/investify-app`.
+
+---
+
+### Opção 2: Instalação Manual Passo a Passo
+
+Caso prefira configurar cada componente individualmente:
+
+#### 1. Criar Memória Virtual (Swap File)
 Para evitar travamentos durante compilações ou instalação de dependências em instâncias com recursos de memória limitados (ex: *Always Free* da Oracle Cloud), é recomendável criar e habilitar um arquivo de swap de **2GB**:
 
 ```bash
