@@ -1443,7 +1443,7 @@ function renderHistoryTables() {
                     
                     let val = 0;
                     if (mr.type === 'total') {
-                        val = (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0);
+                        val = (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0);
                     } else {
                         val = bankData[mr.type] || 0;
                     }
@@ -1493,7 +1493,7 @@ function renderHistoryTables() {
                     for (const b in mData.investments) {
                         const bankData = mData.investments[b] || {};
                         if (mr.type === 'total') {
-                            sum += (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0);
+                            sum += (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0);
                         } else {
                             sum += bankData[mr.type] || 0;
                         }

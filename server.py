@@ -87,8 +87,8 @@ def save_entry():
         else:
             bank_data['juros'] = round(float(jr_val), 2)
             
-        # Calculate bank total (CDB + Aporte)
-        bank_tot = cdb_val + ap_val
+        # Calculate bank total (CDB + Aporte + Juros)
+        bank_tot = cdb_val + ap_val + float(bank_data.get('juros', 0.0))
         bank_data['total'] = round(bank_tot, 2)
         bank_data['cdb'] = round(cdb_val, 2)
         bank_data['aporte'] = round(ap_val, 2)
@@ -251,10 +251,7 @@ def export_excel():
                     bank_data = month_data.get("investments", {}).get(bank_key, {})
                     
                     if m_key == "total":
-                        if "total" in bank_data:
-                            val = float(bank_data["total"])
-                        else:
-                            val = float(bank_data.get("cdb", 0.0)) + float(bank_data.get("aporte", 0.0))
+                        val = float(bank_data.get("cdb", 0.0)) + float(bank_data.get("aporte", 0.0)) + float(bank_data.get("juros", 0.0))
                     else:
                         val = float(bank_data.get(m_key, 0.0))
                         
