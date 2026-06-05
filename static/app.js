@@ -358,7 +358,7 @@ function getNetworthForMonth(year, monthStr) {
                     sum += (parseFloat(item[asset].saldo) || 0);
                 }
             } else {
-                sum += (parseFloat(item.cdb) || 0) + (parseFloat(item.aporte) || 0);
+                sum += (parseFloat(item.cdb) || 0) + (parseFloat(item.aporte) || 0) + (parseFloat(item.juros) || 0);
             }
         }
     }
