@@ -533,6 +533,31 @@ function renderKPIs() {
     const savingsRateEl = document.getElementById('kpi-savings-rate');
     savingsRateEl.className = 'kpi-trend positive';
     savingsRateEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Rendimentos + Aporte`;
+
+    // 5. Itaú, C6, BB Total Fim do Mês
+    const activeMonthData = financialData[selectedYear]?.[latestMonth.toString()] || {};
+    const investments = activeMonthData.investments || {};
+    
+    // Itaú
+    const itauData = investments.itau || {};
+    const itauTotal = (parseFloat(itauData.cdb) || 0) + (parseFloat(itauData.aporte) || 0) + (parseFloat(itauData.juros) || 0);
+    document.getElementById('kpi-itau-total').textContent = formatBRL(itauTotal);
+    
+    // C6 Bank
+    const c6Data = investments.c6 || {};
+    const c6Total = (parseFloat(c6Data.cdb) || 0) + (parseFloat(c6Data.aporte) || 0) + (parseFloat(c6Data.juros) || 0);
+    document.getElementById('kpi-c6-total').textContent = formatBRL(c6Total);
+    
+    // Banco do Brasil
+    const bbData = investments.bb || {};
+    const bbTotal = (parseFloat(bbData.cdb) || 0) + (parseFloat(bbData.aporte) || 0) + (parseFloat(bbData.juros) || 0);
+    document.getElementById('kpi-bb-total').textContent = formatBRL(bbTotal);
+
+    // Update bank KPI card descriptions with the active month name
+    const activeMonthName = monthNames[latestMonth - 1] || 'mês ativo';
+    document.getElementById('kpi-itau-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
+    document.getElementById('kpi-c6-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
+    document.getElementById('kpi-bb-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
 }
 
 // Render Dashboard Charts
