@@ -61,6 +61,10 @@
                     <i class="fa-solid fa-chart-line"></i>
                     <span>Simulador Pro</span>
                 </button>
+                <button class="nav-item" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configurações</span>
+                </button>
             </nav>
             
             <div class="sidebar-footer">
@@ -105,23 +109,6 @@
 
             <!-- TAB 1: DASHBOARD -->
             <section class="tab-content active" id="tab-dashboard">
-                <!-- Google Sheets Sync Banner Card -->
-                <div class="sync-banner-card">
-                    <div class="sync-banner-info">
-                        <i class="fa-solid fa-cloud-arrow-down sync-banner-icon"></i>
-                        <div class="sync-banner-text">
-                            <h3>Sincronizar com Planilha Online</h3>
-                            <p>Atualize os lançamentos históricos baixando os dados da planilha do Google Sheets em tempo real.</p>
-                        </div>
-                    </div>
-                    <div class="sync-banner-form">
-                        <input type="text" id="gsheet-url" class="form-control sync-input" placeholder="Cole a URL de compartilhamento do Google Sheets aqui" value="https://docs.google.com/spreadsheets/d/1VamfDOONJLX2UfjCVVWEI96fzxcxnUj9/edit?gid=2137917615#gid=2137917615">
-                        <button class="btn btn-primary" id="btn-sync-gsheet">
-                            <i class="fa-solid fa-rotate sync-icon-spin" id="sync-icon"></i>
-                            <span id="sync-btn-text">Sincronizar</span>
-                        </button>
-                    </div>
-                </div>
 
                 <!-- Bank Summary KPI cards -->
                 <div class="kpi-grid">
@@ -1198,6 +1185,27 @@
                     </div>
                 </div>
             </section>
+
+            <!-- TAB 10: CONFIGURAÇÕES -->
+            <section class="tab-content" id="tab-settings">
+                <!-- Google Sheets Sync Banner Card -->
+                <div class="sync-banner-card" style="margin-top: 0;">
+                    <div class="sync-banner-info">
+                        <i class="fa-solid fa-cloud-arrow-down sync-banner-icon"></i>
+                        <div class="sync-banner-text">
+                            <h3>Sincronizar com Planilha Online</h3>
+                            <p>Atualize os lançamentos históricos baixando os dados da planilha do Google Sheets em tempo real.</p>
+                        </div>
+                    </div>
+                    <div class="sync-banner-form">
+                        <input type="text" id="gsheet-url" class="form-control sync-input" placeholder="Cole a URL de compartilhamento do Google Sheets aqui" value="https://docs.google.com/spreadsheets/d/1VamfDOONJLX2UfjCVVWEI96fzxcxnUj9/edit?gid=2137917615#gid=2137917615">
+                        <button class="btn btn-primary" id="btn-sync-gsheet">
+                            <i class="fa-solid fa-rotate sync-icon-spin" id="sync-icon"></i>
+                            <span id="sync-btn-text">Sincronizar</span>
+                        </button>
+                    </div>
+                </div>
+            </section>
         </main>
     </div>
 
@@ -1211,6 +1219,6 @@
     </div>
 
     <!-- Main JavaScript Logic -->
-    <script src="app.js?v=1.0.6"></script>
+    <script src="app.js?v=1.0.7"></script>
 </body>
 </html>

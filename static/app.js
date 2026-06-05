@@ -246,6 +246,11 @@ function updateHeaderTitle() {
         subtitleEl.textContent = 'Projeção customizável com cenários de juros, inflação, aportes extras e metas de aposentadoria.';
         if (yearWrapper) yearWrapper.style.display = 'none';
         if (monthWrapper) monthWrapper.style.display = 'none';
+    } else if (activeTab === 'settings') {
+        titleEl.textContent = 'Configurações';
+        subtitleEl.textContent = 'Gerencie as conexões, sincronização de dados e preferências do sistema.';
+        if (yearWrapper) yearWrapper.style.display = 'none';
+        if (monthWrapper) monthWrapper.style.display = 'none';
     }
 }
 
