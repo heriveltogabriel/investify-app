@@ -553,11 +553,16 @@ function renderKPIs() {
     const bbTotal = (parseFloat(bbData.cdb) || 0) + (parseFloat(bbData.aporte) || 0) + (parseFloat(bbData.juros) || 0);
     document.getElementById('kpi-bb-total').textContent = formatBRL(bbTotal);
 
+    // Total Carteira (Soma dos 3 bancos)
+    const totalCarteiraFim = itauTotal + c6Total + bbTotal;
+    document.getElementById('kpi-total-carteira-fim').textContent = formatBRL(totalCarteiraFim);
+
     // Update bank KPI card descriptions with the active month name
     const activeMonthName = monthNames[latestMonth - 1] || 'mês ativo';
     document.getElementById('kpi-itau-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
     document.getElementById('kpi-c6-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
     document.getElementById('kpi-bb-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
+    document.getElementById('kpi-total-carteira-fim-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Soma dos 3 bancos em ${activeMonthName}`;
 }
 
 // Render Dashboard Charts
