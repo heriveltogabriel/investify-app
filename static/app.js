@@ -193,6 +193,7 @@ function initApp() {
 
     // Fetch initial data
     fetchData();
+    applyCurrencyMaskListeners();
 }
 
 function updateHeaderTitle() {
@@ -955,7 +956,7 @@ function renderFormDynamicInputs() {
         div.className = 'form-group';
         div.innerHTML = `
             <label for="input-fixed-${key}">${formatLabel(key)}</label>
-            <input type="number" step="0.01" id="input-fixed-${key}" data-key="${key}" data-type="fixed" value="0.00">
+            <input type="text" id="input-fixed-${key}" data-key="${key}" data-type="fixed" class="currency-input" value="0,00">
         `;
         fixedContainer.appendChild(div);
     });
@@ -968,7 +969,7 @@ function renderFormDynamicInputs() {
         div.className = 'form-group';
         div.innerHTML = `
             <label for="input-card-${key}">${formatLabel(key)}</label>
-            <input type="number" step="0.01" id="input-card-${key}" data-key="${key}" data-type="card" value="0.00">
+            <input type="text" id="input-card-${key}" data-key="${key}" data-type="card" class="currency-input" value="0,00">
         `;
         cardContainer.appendChild(div);
     });
@@ -980,23 +981,25 @@ function renderFormDynamicInputs() {
         const div = document.createElement('div');
         div.className = 'form-group';
         
-        let defVal = "0.00";
-        if (key === 'salario') defVal = "17000.00";
-        if (key === 'salario_dia_15') defVal = "9409.48";
-        if (key === 'salario_dia_30') defVal = "7579.26";
-        if (key === 'aluguel') defVal = "3650.00";
+        let defVal = 0;
+        if (key === 'salario') defVal = 17000.00;
+        if (key === 'salario_dia_15') defVal = 9409.48;
+        if (key === 'salario_dia_30') defVal = 7579.26;
+        if (key === 'aluguel') defVal = 3650.00;
         
         div.innerHTML = `
             <label for="input-income-${key}">${formatLabel(key)}</label>
-            <input type="number" step="0.01" id="input-income-${key}" data-key="${key}" data-type="income" value="${defVal}">
+            <input type="text" id="input-income-${key}" data-key="${key}" data-type="income" class="currency-input" value="${formatCurrencyString(defVal)}">
         `;
         incomeContainer.appendChild(div);
     });
     
     // Attach input listeners for dynamic BRL sums preview
-    document.querySelectorAll('.form-inputs-dynamic-grid input').forEach(input => {
+    document.querySelectorAll('.form-inputs-dynamic-grid input, input.currency-input').forEach(input => {
         input.addEventListener('input', calculateFormPreview);
     });
+    
+    applyCurrencyMaskListeners();
 }
 
 // Add a new custom category dynamically
@@ -1130,19 +1133,19 @@ function calculateFormPreview() {
     let totalIncome = 0;
     incomeKeys.forEach(key => {
         const el = document.getElementById(`input-income-${key}`);
-        totalIncome += el ? (parseFloat(el.value) || 0) : 0;
+        totalIncome += el ? parsePtBrFloat(el.value) : 0;
     });
     
     let totalFixed = 0;
     fixedExpenseKeys.forEach(key => {
         const el = document.getElementById(`input-fixed-${key}`);
-        totalFixed += el ? (parseFloat(el.value) || 0) : 0;
+        totalFixed += el ? parsePtBrFloat(el.value) : 0;
     });
     
     let totalCards = 0;
     cardExpenseKeys.forEach(key => {
         const el = document.getElementById(`input-card-${key}`);
-        totalCards += el ? (parseFloat(el.value) || 0) : 0;
+        totalCards += el ? parsePtBrFloat(el.value) : 0;
     });
     
     const totalExpenses = totalFixed + totalCards;
@@ -1150,7 +1153,7 @@ function calculateFormPreview() {
     
     const totalAportes = ['inv-itau-aporte', 'inv-bb-aporte', 'inv-c6-aporte'].reduce((acc, id) => {
         const el = document.getElementById(id);
-        return acc + (el ? (parseFloat(el.value) || 0) : 0);
+        return acc + (el ? parsePtBrFloat(el.value) : 0);
     }, 0);
     
     document.getElementById('preview-income').textContent = formatBRL(totalIncome);
@@ -1175,11 +1178,11 @@ function calculateFormPreview() {
         const totalInput = document.getElementById(`inv-${bank}-total`);
         
         if (cdbInput && totalInput) {
-            const cdb = parseFloat(cdbInput.value) || 0;
-            const aporte = aporteInput ? (parseFloat(aporteInput.value) || 0) : 0;
-            const juros = jurosInput ? (parseFloat(jurosInput.value) || 0) : 0;
+            const cdb = parsePtBrFloat(cdbInput.value);
+            const aporte = aporteInput ? parsePtBrFloat(aporteInput.value) : 0;
+            const juros = jurosInput ? parsePtBrFloat(jurosInput.value) : 0;
             const total = cdb + aporte + juros;
-            totalInput.value = total.toFixed(2);
+            totalInput.value = formatCurrencyString(total);
         }
     });
 }
@@ -1198,30 +1201,30 @@ function populateFormWithExistingData(showToastSuccess = true) {
         // Reset fields to defaults
         fixedExpenseKeys.forEach(key => {
             const input = document.getElementById(`input-fixed-${key}`);
-            if (input) input.value = "0.00";
+            if (input) input.value = "0,00";
         });
         cardExpenseKeys.forEach(key => {
             const input = document.getElementById(`input-card-${key}`);
-            if (input) input.value = "0.00";
+            if (input) input.value = "0,00";
         });
         incomeKeys.forEach(key => {
             const input = document.getElementById(`input-income-${key}`);
             if (input) {
-                if (key === 'salario') input.value = "17000.00";
-                else if (key === 'aluguel') input.value = "3650.00";
-                else input.value = "0.00";
+                if (key === 'salario') input.value = formatCurrencyString(17000.00);
+                else if (key === 'aluguel') input.value = formatCurrencyString(3650.00);
+                else input.value = "0,00";
             }
         });
-        document.getElementById('inv-itau-cdb').value = "0.00";
-        document.getElementById('inv-itau-aporte').value = "0.00";
+        document.getElementById('inv-itau-cdb').value = "0,00";
+        document.getElementById('inv-itau-aporte').value = "0,00";
         document.getElementById('inv-itau-juros').value = "";
         
-        document.getElementById('inv-bb-cdb').value = "0.00";
-        document.getElementById('inv-bb-aporte').value = "0.00";
+        document.getElementById('inv-bb-cdb').value = "0,00";
+        document.getElementById('inv-bb-aporte').value = "0,00";
         document.getElementById('inv-bb-juros').value = "";
         
-        document.getElementById('inv-c6-cdb').value = "0.00";
-        document.getElementById('inv-c6-aporte').value = "0.00";
+        document.getElementById('inv-c6-cdb').value = "0,00";
+        document.getElementById('inv-c6-aporte').value = "0,00";
         document.getElementById('inv-c6-juros').value = "";
         
         calculateFormPreview();
@@ -1231,24 +1234,24 @@ function populateFormWithExistingData(showToastSuccess = true) {
     
     // Fill investments
     const inv = monthData.investments || {};
-    document.getElementById('inv-itau-cdb').value = inv.itau?.cdb || "0.00";
-    document.getElementById('inv-itau-aporte').value = inv.itau?.aporte || "0.00";
-    document.getElementById('inv-itau-juros').value = inv.itau?.juros !== undefined ? inv.itau.juros : "";
+    document.getElementById('inv-itau-cdb').value = formatCurrencyString(inv.itau?.cdb || 0);
+    document.getElementById('inv-itau-aporte').value = formatCurrencyString(inv.itau?.aporte || 0);
+    document.getElementById('inv-itau-juros').value = inv.itau?.juros !== undefined ? formatCurrencyString(inv.itau.juros) : "";
     
-    document.getElementById('inv-bb-cdb').value = inv.bb?.cdb || "0.00";
-    document.getElementById('inv-bb-aporte').value = inv.bb?.aporte || "0.00";
-    document.getElementById('inv-bb-juros').value = inv.bb?.juros !== undefined ? inv.bb.juros : "";
+    document.getElementById('inv-bb-cdb').value = formatCurrencyString(inv.bb?.cdb || 0);
+    document.getElementById('inv-bb-aporte').value = formatCurrencyString(inv.bb?.aporte || 0);
+    document.getElementById('inv-bb-juros').value = inv.bb?.juros !== undefined ? formatCurrencyString(inv.bb.juros) : "";
     
-    document.getElementById('inv-c6-cdb').value = inv.c6?.cdb || "0.00";
-    document.getElementById('inv-c6-aporte').value = inv.c6?.aporte || "0.00";
-    document.getElementById('inv-c6-juros').value = inv.c6?.juros !== undefined ? inv.c6.juros : "";
+    document.getElementById('inv-c6-cdb').value = formatCurrencyString(inv.c6?.cdb || 0);
+    document.getElementById('inv-c6-aporte').value = formatCurrencyString(inv.c6?.aporte || 0);
+    document.getElementById('inv-c6-juros').value = inv.c6?.juros !== undefined ? formatCurrencyString(inv.c6.juros) : "";
     
     // Fill expenses fixed
     const fixed = monthData.expenses?.fixed || {};
     fixedExpenseKeys.forEach(key => {
         const input = document.getElementById(`input-fixed-${key}`);
         if (input) {
-            input.value = fixed[key] !== undefined ? fixed[key] : "0.00";
+            input.value = formatCurrencyString(fixed[key] !== undefined ? fixed[key] : 0);
         }
     });
     
@@ -1257,7 +1260,7 @@ function populateFormWithExistingData(showToastSuccess = true) {
     cardExpenseKeys.forEach(key => {
         const input = document.getElementById(`input-card-${key}`);
         if (input) {
-            input.value = cards[key] !== undefined ? cards[key] : "0.00";
+            input.value = formatCurrencyString(cards[key] !== undefined ? cards[key] : 0);
         }
     });
     
@@ -1266,7 +1269,7 @@ function populateFormWithExistingData(showToastSuccess = true) {
     incomeKeys.forEach(key => {
         const input = document.getElementById(`input-income-${key}`);
         if (input) {
-            input.value = inc[key] !== undefined ? inc[key] : "0.00";
+            input.value = formatCurrencyString(inc[key] !== undefined ? inc[key] : 0);
         }
     });
     
@@ -1286,12 +1289,12 @@ async function handleFormSubmit(e) {
     
     const getVal = id => {
         const el = document.getElementById(id);
-        return el ? (parseFloat(el.value) || 0) : 0;
+        return el ? parsePtBrFloat(el.value) : 0;
     };
     const getOptionalVal = id => {
         const el = document.getElementById(id);
-        if (!el || el.value === "") return null;
-        return parseFloat(el.value);
+        if (!el || el.value.trim() === "" || el.value.trim() === "0,00") return null;
+        return parsePtBrFloat(el.value);
     };
     
     // Dynamically collect expenses
@@ -3467,6 +3470,64 @@ function renderEntriesAportesChart(year) {
                 }
             }
         }
+    });
+}
+
+// Portuguese BRL currency masking helpers
+function formatCurrencyString(rawVal) {
+    if (rawVal === undefined || rawVal === null || rawVal === '') return "0,00";
+    let number = 0;
+    if (typeof rawVal === 'number') {
+        number = rawVal;
+    } else {
+        let clean = rawVal.toString().replace(/\D/g, '');
+        if (!clean) return "0,00";
+        number = parseFloat(clean) / 100;
+    }
+    return number.toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function parsePtBrFloat(val) {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return val;
+    
+    const str = val.toString().trim();
+    if (str.includes(',')) {
+        const clean = str.replace(/\./g, '').replace(',', '.');
+        return parseFloat(clean) || 0;
+    }
+    return parseFloat(str) || 0;
+}
+
+function applyCurrencyMaskListeners() {
+    document.querySelectorAll('input.currency-input').forEach(input => {
+        if (input.dataset.masked) return;
+        input.dataset.masked = "true";
+        
+        // Initial formatting if it has value
+        if (input.value) {
+            input.value = formatCurrencyString(input.value);
+        }
+        
+        input.addEventListener('input', (e) => {
+            const cursor = e.target.selectionStart;
+            const originalLength = e.target.value.length;
+            
+            // Format input value
+            e.target.value = formatCurrencyString(e.target.value);
+            
+            // Fix cursor drift
+            const newLength = e.target.value.length;
+            e.target.setSelectionRange(cursor + (newLength - originalLength), cursor + (newLength - originalLength));
+        });
+        
+        input.addEventListener('blur', (e) => {
+            if (e.target.value.trim() === '') {
+                e.target.value = "0,00";
+            } else {
+                e.target.value = formatCurrencyString(e.target.value);
+            }
+        });
     });
 }
 

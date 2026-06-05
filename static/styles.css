@@ -555,7 +555,7 @@ select:focus {
     color: var(--color-text-secondary);
 }
 
-input[type="number"] {
+input[type="number"], input.currency-input {
     background-color: var(--bg-input);
     color: var(--color-text-primary);
     border: 1px solid var(--border-color);
@@ -568,7 +568,7 @@ input[type="number"] {
     width: 100%;
 }
 
-input[type="number"]:focus {
+input[type="number"]:focus, input.currency-input:focus {
     border-color: var(--accent-color);
     box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
 }
