@@ -415,21 +415,24 @@ function renderKPIs() {
         }
     }
     
-    document.getElementById('kpi-networth').textContent = formatBRL(networth);
+    const networthEl = document.getElementById('kpi-networth');
+    if (networthEl) networthEl.textContent = formatBRL(networth);
     
     const trendEl = document.getElementById('kpi-networth-trend');
-    if (prevNetworth > 0) {
-        const diff = networth - prevNetworth;
-        const diffPct = (diff / prevNetworth) * 100;
-        const sign = diff >= 0 ? '+' : '';
-        const trendClass = diff >= 0 ? 'positive' : 'negative';
-        const trendIcon = diff >= 0 ? 'fa-circle-arrow-up' : 'fa-circle-arrow-down';
-        
-        trendEl.className = `kpi-trend ${trendClass}`;
-        trendEl.innerHTML = `<i class="fa-solid ${trendIcon}"></i> ${sign}${formatBRL(diff)} (${sign}${diffPct.toFixed(2)}% vs mês ant.)`;
-    } else {
-        trendEl.className = 'kpi-trend';
-        trendEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem histórico de comparação`;
+    if (trendEl) {
+        if (prevNetworth > 0) {
+            const diff = networth - prevNetworth;
+            const diffPct = (diff / prevNetworth) * 100;
+            const sign = diff >= 0 ? '+' : '';
+            const trendClass = diff >= 0 ? 'positive' : 'negative';
+            const trendIcon = diff >= 0 ? 'fa-circle-arrow-up' : 'fa-circle-arrow-down';
+            
+            trendEl.className = `kpi-trend ${trendClass}`;
+            trendEl.innerHTML = `<i class="fa-solid ${trendIcon}"></i> ${sign}${formatBRL(diff)} (${sign}${diffPct.toFixed(2)}% vs mês ant.)`;
+        } else {
+            trendEl.className = 'kpi-trend';
+            trendEl.innerHTML = `<i class="fa-solid fa-circle-info"></i> Sem histórico de comparação`;
+        }
     }
 
     // 2. Rendimento (Juros acumulados no ano)
