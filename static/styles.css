@@ -537,6 +537,12 @@ select:focus {
     gap: 10px;
 }
 
+.form-group-row-quad {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+}
+
 .form-group {
     display: flex;
     flex-direction: column;

@@ -1165,6 +1165,23 @@ function calculateFormPreview() {
     }
     
     document.getElementById('preview-aportes').textContent = formatBRL(totalAportes);
+
+    // Calculate bank totals in real-time
+    const banksList = ['itau', 'bb', 'c6'];
+    banksList.forEach(bank => {
+        const cdbInput = document.getElementById(`inv-${bank}-cdb`);
+        const aporteInput = document.getElementById(`inv-${bank}-aporte`);
+        const jurosInput = document.getElementById(`inv-${bank}-juros`);
+        const totalInput = document.getElementById(`inv-${bank}-total`);
+        
+        if (cdbInput && totalInput) {
+            const cdb = parseFloat(cdbInput.value) || 0;
+            const aporte = aporteInput ? (parseFloat(aporteInput.value) || 0) : 0;
+            const juros = jurosInput ? (parseFloat(jurosInput.value) || 0) : 0;
+            const total = cdb + aporte + juros;
+            totalInput.value = total.toFixed(2);
+        }
+    });
 }
 
 // Populate the form fields with existing DB values for selected month/year
