@@ -952,7 +952,18 @@
 
             <!-- TAB 4: SIMULATOR (SIMULADOR DE PROJEÇÕES) -->
             <section class="tab-content" id="tab-simulator">
-                <div class="simulator-layout">
+                <!-- Selector actions -->
+                <div class="sim-mode-selector" style="display: flex; gap: 15px; margin-bottom: 20px;">
+                    <button class="btn btn-primary btn-sm sim-mode-btn active" id="btn-mode-manual" style="border-radius: 8px;">
+                        <i class="fa-solid fa-sliders"></i> Simulador Anual (Espelho do Ano)
+                    </button>
+                    <button class="btn btn-secondary btn-sm sim-mode-btn" id="btn-mode-goal" style="border-radius: 8px;">
+                        <i class="fa-solid fa-bullseye"></i> Planejador de Metas
+                    </button>
+                </div>
+
+                <!-- MANUAL SIMULATOR CONTAINER -->
+                <div class="simulator-layout" id="sim-manual-layout">
                     <!-- Controls Column -->
                     <div class="simulator-controls-card">
                         <h2>Parâmetros da Projeção Anual</h2>
@@ -1008,6 +1019,83 @@
                         </div>
                         <div class="chart-wrapper simulator-chart-wrapper">
                             <canvas id="chart-projection"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- GOAL SIMULATOR CONTAINER -->
+                <div class="simulator-layout" id="sim-goal-layout" style="display: none;">
+                    <!-- Controls Column -->
+                    <div class="simulator-controls-card">
+                        <h2>Parâmetros da Meta</h2>
+                        <p class="subtitle">Insira a meta de patrimônio, o prazo e a taxa estimada de juros para descobrir o aporte mensal necessário.</p>
+                        
+                        <div class="simulator-form-group">
+                            <label for="sim-goal-target">Meta de Patrimônio (R$)</label>
+                            <input type="text" id="sim-goal-target" class="currency-input" placeholder="1.000.000,00" value="1.000.000,00">
+                        </div>
+                        
+                        <div class="simulator-form-group">
+                            <label for="sim-goal-starting">Capital Inicial (R$)</label>
+                            <input type="text" id="sim-goal-starting" class="currency-input" placeholder="0,00" value="300.000,00">
+                        </div>
+                        
+                        <div class="simulator-form-group">
+                            <label for="sim-goal-months">Prazo (Meses)</label>
+                            <input type="number" id="sim-goal-months" min="1" max="600" class="sim-number-input" value="120" style="padding: 10px 14px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
+                        </div>
+
+                        <div class="simulator-form-group">
+                            <label for="sim-goal-rate">Taxa de Juros Estimada (% a.a.)</label>
+                            <input type="number" id="sim-goal-rate" min="0" max="100" step="0.1" class="sim-number-input" value="10" style="padding: 10px 14px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
+                        </div>
+
+                        <div class="simulator-metrics-box" style="margin-top: 15px;">
+                            <div class="sim-metric highlight">
+                                <span class="sim-metric-title">Aporte Mensal Requerido</span>
+                                <span class="sim-metric-value text-green" id="sim-goal-req-aporte" style="font-size: 16px;">R$ 0,00</span>
+                            </div>
+                            <div class="sim-metric">
+                                <span class="sim-metric-title">Total dos Aportes</span>
+                                <span class="sim-metric-value" id="sim-goal-total-aportado">R$ 0,00</span>
+                            </div>
+                            <div class="sim-metric">
+                                <span class="sim-metric-title">Total de Juros Ganhos</span>
+                                <span class="sim-metric-value text-gold" id="sim-goal-total-juros">R$ 0,00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Result Column -->
+                    <div class="simulator-result-card" style="display: flex; flex-direction: column; gap: 20px;">
+                        <div class="chart-header">
+                            <h3>Evolução Patrimonial para Atingir a Meta</h3>
+                            <span class="chart-subtitle">Progressão mensal estimada de aportes + juros compostos</span>
+                        </div>
+                        <div class="chart-wrapper simulator-chart-wrapper" style="height: 250px;">
+                            <canvas id="chart-goal-projection"></canvas>
+                        </div>
+
+                        <div class="table-card" style="margin-top: 10px; border: none; padding: 0; background: transparent; box-shadow: none;">
+                            <div class="table-header" style="padding: 0 0 10px 0;">
+                                <h4>Demonstrativo Mês a Mês</h4>
+                            </div>
+                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px;">
+                                <table class="data-table" id="table-sim-goal-months" style="font-size: 12px;">
+                                    <thead>
+                                        <tr>
+                                            <th>MÊS</th>
+                                            <th>SALDO INICIAL</th>
+                                            <th>APORTE MENSAL</th>
+                                            <th>JUROS RECEBIDOS</th>
+                                            <th>SALDO FINAL</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="sim-goal-months-body">
+                                        <!-- Dynamic entries from JS -->
+                                    </tbody>
+                                </table>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -1212,6 +1300,6 @@
     </div>
 
     <!-- Main JavaScript Logic -->
-    <script src="app.js?v=1.0.9"></script>
+    <script src="app.js?v=1.1.0"></script>
 </body>
 </html>

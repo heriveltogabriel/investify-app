@@ -38,6 +38,7 @@ let chartAdvBreakdown = null;
 let chartQuickConfrontation = null;
 let chartQuickEvolution = null;
 let chartEntriesAportes = null;
+let chartGoalProjection = null;
 
 // Month mappings
 const monthNames = [
@@ -189,6 +190,54 @@ function initApp() {
                 updateUI();
             }
         });
+    });
+
+    // Toggle Simulator modes
+    const btnModeManual = document.getElementById('btn-mode-manual');
+    const btnModeGoal = document.getElementById('btn-mode-goal');
+    const layoutManual = document.getElementById('sim-manual-layout');
+    const layoutGoal = document.getElementById('sim-goal-layout');
+
+    if (btnModeManual && btnModeGoal) {
+        btnModeManual.addEventListener('click', () => {
+            btnModeManual.classList.add('btn-primary');
+            btnModeManual.classList.remove('btn-secondary');
+            btnModeManual.classList.add('active');
+            
+            btnModeGoal.classList.add('btn-secondary');
+            btnModeGoal.classList.remove('btn-primary');
+            btnModeGoal.classList.remove('active');
+            
+            layoutManual.style.display = 'grid';
+            layoutGoal.style.display = 'none';
+        });
+
+        btnModeGoal.addEventListener('click', () => {
+            btnModeGoal.classList.add('btn-primary');
+            btnModeGoal.classList.remove('btn-secondary');
+            btnModeGoal.classList.add('active');
+            
+            btnModeManual.classList.add('btn-secondary');
+            btnModeManual.classList.remove('btn-primary');
+            btnModeManual.classList.remove('active');
+            
+            layoutManual.style.display = 'none';
+            layoutGoal.style.display = 'grid';
+            
+            // Trigger calculation
+            calculateGoalSimulator();
+        });
+    }
+
+    // Attach listeners to goal simulator inputs
+    const goalInputs = ['sim-goal-target', 'sim-goal-starting', 'sim-goal-months', 'sim-goal-rate'];
+    goalInputs.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', () => {
+                calculateGoalSimulator();
+            });
+        }
     });
 
     // Fetch initial data
@@ -3528,6 +3577,166 @@ function applyCurrencyMaskListeners() {
                 e.target.value = formatCurrencyString(e.target.value);
             }
         });
+    });
+}
+
+// Goal Simulator Calculation and Rendering
+function calculateGoalSimulator() {
+    const targetVal = parsePtBrFloat(document.getElementById('sim-goal-target').value);
+    const startingVal = parsePtBrFloat(document.getElementById('sim-goal-starting').value);
+    const months = parseInt(document.getElementById('sim-goal-months').value) || 1;
+    const annualRate = parseFloat(document.getElementById('sim-goal-rate').value) || 0;
+    
+    // Monthly rate
+    const r = annualRate > 0 ? Math.pow(1 + annualRate/100, 1/12) - 1 : 0;
+    
+    let reqAporte = 0;
+    if (r === 0) {
+        reqAporte = Math.max(0, (targetVal - startingVal) / months);
+    } else {
+        const fvOfStarting = startingVal * Math.pow(1 + r, months);
+        if (fvOfStarting >= targetVal) {
+            reqAporte = 0;
+        } else {
+            reqAporte = (targetVal - fvOfStarting) / ((Math.pow(1 + r, months) - 1) / r);
+        }
+    }
+    
+    // Update metrics UI
+    document.getElementById('sim-goal-req-aporte').textContent = formatBRL(reqAporte);
+    
+    // Calculate month by month projection details
+    let currentBalance = startingVal;
+    let totalInvested = startingVal;
+    let totalJuros = 0;
+    
+    const chartLabels = [];
+    const chartAporteData = [];
+    const chartJurosData = [];
+    const tableRowsHtml = [];
+    
+    for (let m = 1; m <= months; m++) {
+        const initBalance = currentBalance;
+        const monthAporte = reqAporte;
+        
+        // Balance before interest = initial + aporte
+        const interest = (initBalance + monthAporte) * r;
+        currentBalance = initBalance + monthAporte + interest;
+        
+        totalInvested += monthAporte;
+        totalJuros += interest;
+        
+        // Save labels and chart data
+        chartLabels.push(`Mês ${m}`);
+        chartAporteData.push(parseFloat(totalInvested.toFixed(2)));
+        chartJurosData.push(parseFloat(totalJuros.toFixed(2)));
+        
+        // Show month detail (conditionally add divider if months is large)
+        if (m <= 12 || m > months - 12) {
+            if (m === 13 && months > 24) {
+                // Show divider row
+                tableRowsHtml.push(`
+                    <tr style="background: rgba(255,255,255,0.02);">
+                        <td colspan="5" style="text-align: center; color: var(--color-text-secondary); font-style: italic;">... demonstrativo ocultado até os últimos 12 meses ...</td>
+                    </tr>
+                `);
+            }
+            tableRowsHtml.push(`
+                <tr>
+                    <td>Mês ${m}</td>
+                    <td class="num-val">${formatBRL(initBalance)}</td>
+                    <td class="num-val">${formatBRL(monthAporte)}</td>
+                    <td class="num-val text-gold">${formatBRL(interest)}</td>
+                    <td class="num-val" style="font-weight: 600; text-align: right;">${formatBRL(currentBalance)}</td>
+                </tr>
+            `);
+        }
+    }
+    
+    document.getElementById('sim-goal-total-aportado').textContent = formatBRL(totalInvested);
+    document.getElementById('sim-goal-total-juros').textContent = formatBRL(totalJuros);
+    
+    const tbody = document.getElementById('sim-goal-months-body');
+    if (tbody) {
+        tbody.innerHTML = tableRowsHtml.join('');
+    }
+    
+    // Render Chart
+    renderGoalChart(chartLabels, chartAporteData, chartJurosData);
+}
+
+function renderGoalChart(labels, aporteData, jurosData) {
+    const canvas = document.getElementById('chart-goal-projection');
+    if (!canvas) return;
+    
+    if (chartGoalProjection) chartGoalProjection.destroy();
+    
+    // If labels count is very large, downsample chart ticks to keep it clean
+    const stepSize = Math.max(1, Math.ceil(labels.length / 12));
+    
+    const ctx = canvas.getContext('2d');
+    chartGoalProjection = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Aportado Acumulado',
+                    data: aporteData,
+                    borderColor: '#9ca3af',
+                    backgroundColor: 'rgba(156, 163, 175, 0.1)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true
+                },
+                {
+                    label: 'Patrimônio Total',
+                    data: jurosData.map((v, i) => v + aporteData[i]),
+                    borderColor: '#6366f1',
+                    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                    borderWidth: 2,
+                    pointRadius: 0,
+                    fill: true
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: 'top',
+                    labels: { color: '#9ca3af', font: { family: 'Inter', size: 10 } }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            return context.dataset.label + ': ' + formatBRL(context.raw);
+                        }
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 9 },
+                        callback: function(val, index) {
+                            return index % stepSize === 0 || index === labels.length - 1 ? labels[index] : '';
+                        }
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    grid: { color: 'rgba(255, 255, 255, 0.03)' },
+                    ticks: {
+                        color: '#9ca3af',
+                        font: { family: 'Inter', size: 9 },
+                        callback: function(value) { return formatBRL(value); }
+                    }
+                }
+            }
+        }
     });
 }
 
