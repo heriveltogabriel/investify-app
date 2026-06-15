@@ -1264,17 +1264,35 @@ function populateFormWithExistingData(showToastSuccess = true) {
                 else input.value = "0,00";
             }
         });
-        document.getElementById('inv-itau-cdb').value = "0,00";
+        // Find previous month's totals to prefill CDB balances
+        let prevYear = parseInt(year);
+        let prevMonth = parseInt(month) - 1;
+        if (prevMonth === 0) {
+            prevMonth = 12;
+            prevYear -= 1;
+        }
+        
+        const prevMonthData = financialData[prevYear]?.[prevMonth];
+        const prevInv = prevMonthData?.investments || {};
+        
+        const itauPrevTotal = prevInv.itau?.total !== undefined ? prevInv.itau.total : 
+                              (prevInv.itau ? ((prevInv.itau.cdb || 0) + (prevInv.itau.aporte || 0) + (prevInv.itau.juros || 0)) : 0);
+        const bbPrevTotal = prevInv.bb?.total !== undefined ? prevInv.bb.total : 
+                            (prevInv.bb ? ((prevInv.bb.cdb || 0) + (prevInv.bb.aporte || 0) + (prevInv.bb.juros || 0)) : 0);
+        const c6PrevTotal = prevInv.c6?.total !== undefined ? prevInv.c6.total : 
+                            (prevInv.c6 ? ((prevInv.c6.cdb || 0) + (prevInv.c6.aporte || 0) + (prevInv.c6.juros || 0)) : 0);
+                            
+        document.getElementById('inv-itau-cdb').value = formatCurrencyString(itauPrevTotal);
         document.getElementById('inv-itau-aporte').value = "0,00";
-        document.getElementById('inv-itau-juros').value = "";
+        document.getElementById('inv-itau-juros').value = "0,00";
         
-        document.getElementById('inv-bb-cdb').value = "0,00";
+        document.getElementById('inv-bb-cdb').value = formatCurrencyString(bbPrevTotal);
         document.getElementById('inv-bb-aporte').value = "0,00";
-        document.getElementById('inv-bb-juros').value = "";
+        document.getElementById('inv-bb-juros').value = "0,00";
         
-        document.getElementById('inv-c6-cdb').value = "0,00";
+        document.getElementById('inv-c6-cdb').value = formatCurrencyString(c6PrevTotal);
         document.getElementById('inv-c6-aporte').value = "0,00";
-        document.getElementById('inv-c6-juros').value = "";
+        document.getElementById('inv-c6-juros').value = "0,00";
         
         calculateFormPreview();
         renderEntriesAportesChart(year);
@@ -1342,7 +1360,7 @@ async function handleFormSubmit(e) {
     };
     const getOptionalVal = id => {
         const el = document.getElementById(id);
-        if (!el || el.value.trim() === "" || el.value.trim() === "0,00") return null;
+        if (!el || el.value.trim() === "") return null;
         return parsePtBrFloat(el.value);
     };
     
