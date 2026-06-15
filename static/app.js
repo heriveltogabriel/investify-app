@@ -1301,17 +1301,43 @@ function populateFormWithExistingData(showToastSuccess = true) {
     
     // Fill investments
     const inv = monthData.investments || {};
-    document.getElementById('inv-itau-cdb').value = formatCurrencyString(inv.itau?.cdb || 0);
+    
+    // Find previous month's totals to prefill CDB balances if current is 0/missing
+    let prevYear = parseInt(year);
+    let prevMonth = parseInt(month) - 1;
+    if (prevMonth === 0) {
+        prevMonth = 12;
+        prevYear -= 1;
+    }
+    const prevMonthData = financialData[prevYear]?.[prevMonth];
+    const prevInv = prevMonthData?.investments || {};
+    
+    const itauPrevTotal = prevInv.itau?.total !== undefined ? prevInv.itau.total : 
+                          (prevInv.itau ? ((prevInv.itau.cdb || 0) + (prevInv.itau.aporte || 0) + (prevInv.itau.juros || 0)) : 0);
+    const bbPrevTotal = prevInv.bb?.total !== undefined ? prevInv.bb.total : 
+                        (prevInv.bb ? ((prevInv.bb.cdb || 0) + (prevInv.bb.aporte || 0) + (prevInv.bb.juros || 0)) : 0);
+    const c6PrevTotal = prevInv.c6?.total !== undefined ? prevInv.c6.total : 
+                        (prevInv.c6 ? ((prevInv.c6.cdb || 0) + (prevInv.c6.aporte || 0) + (prevInv.c6.juros || 0)) : 0);
+    
+    const itauCdbValue = (inv.itau?.cdb !== undefined && inv.itau.cdb !== 0) ? inv.itau.cdb : itauPrevTotal;
+    const bbCdbValue = (inv.bb?.cdb !== undefined && inv.bb.cdb !== 0) ? inv.bb.cdb : bbPrevTotal;
+    const c6CdbValue = (inv.c6?.cdb !== undefined && inv.c6.cdb !== 0) ? inv.c6.cdb : c6PrevTotal;
+
+    const itauJurosValue = (inv.itau?.cdb !== undefined && inv.itau.cdb !== 0) ? (inv.itau.juros !== undefined ? formatCurrencyString(inv.itau.juros) : "") : "0,00";
+    const bbJurosValue = (inv.bb?.cdb !== undefined && inv.bb.cdb !== 0) ? (inv.bb.juros !== undefined ? formatCurrencyString(inv.bb.juros) : "") : "0,00";
+    const c6JurosValue = (inv.c6?.cdb !== undefined && inv.c6.cdb !== 0) ? (inv.c6.juros !== undefined ? formatCurrencyString(inv.c6.juros) : "") : "0,00";
+
+    document.getElementById('inv-itau-cdb').value = formatCurrencyString(itauCdbValue);
     document.getElementById('inv-itau-aporte').value = formatCurrencyString(inv.itau?.aporte || 0);
-    document.getElementById('inv-itau-juros').value = inv.itau?.juros !== undefined ? formatCurrencyString(inv.itau.juros) : "";
+    document.getElementById('inv-itau-juros').value = itauJurosValue;
     
-    document.getElementById('inv-bb-cdb').value = formatCurrencyString(inv.bb?.cdb || 0);
+    document.getElementById('inv-bb-cdb').value = formatCurrencyString(bbCdbValue);
     document.getElementById('inv-bb-aporte').value = formatCurrencyString(inv.bb?.aporte || 0);
-    document.getElementById('inv-bb-juros').value = inv.bb?.juros !== undefined ? formatCurrencyString(inv.bb.juros) : "";
+    document.getElementById('inv-bb-juros').value = bbJurosValue;
     
-    document.getElementById('inv-c6-cdb').value = formatCurrencyString(inv.c6?.cdb || 0);
+    document.getElementById('inv-c6-cdb').value = formatCurrencyString(c6CdbValue);
     document.getElementById('inv-c6-aporte').value = formatCurrencyString(inv.c6?.aporte || 0);
-    document.getElementById('inv-c6-juros').value = inv.c6?.juros !== undefined ? formatCurrencyString(inv.c6.juros) : "";
+    document.getElementById('inv-c6-juros').value = c6JurosValue;
     
     // Fill expenses fixed
     const fixed = monthData.expenses?.fixed || {};
