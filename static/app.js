@@ -11,8 +11,9 @@ window.fetch = async function(...args) {
 // State variables
 let financialData = {};
 let activeTab = 'dashboard';
-let selectedYear = '2026';
-let selectedMonth = '5';
+const currentDate = new Date();
+let selectedYear = currentDate.getFullYear().toString();
+let selectedMonth = (currentDate.getMonth() + 1).toString();
 let simStartingCapital = 0;
 let simMonthlyData = [];
 
@@ -52,6 +53,16 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initApp() {
+    // Set dynamic default date values in dropdowns
+    const entryYearEl = document.getElementById('entry-year');
+    if (entryYearEl) entryYearEl.value = selectedYear;
+    
+    const entryMonthEl = document.getElementById('entry-month');
+    if (entryMonthEl) entryMonthEl.value = selectedMonth;
+    
+    const initialFilterYearEl = document.getElementById('filter-year');
+    if (initialFilterYearEl) initialFilterYearEl.value = selectedYear;
+
     // Tab switching listener
     document.querySelectorAll('.nav-item').forEach(button => {
         button.addEventListener('click', (e) => {
