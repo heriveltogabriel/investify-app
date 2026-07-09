@@ -108,12 +108,13 @@ def save_entry():
     incomes = payload.get('incomes', {})
     
     # Calculate Juros automatically if not provided or set to 0 and we have a previous month
-    # Formula: Juros(M) = CDB(M) - (CDB(M-1) + Aporte(M-1))
+    # Formula: Juros(M) = CDB(M) - (CDB(M-1) + Aporte(M-1) - Retirada(M-1))
     prev_month = str(int(month) - 1)
     for bank in ['itau', 'bb', 'c6']:
         bank_data = investments.get(bank, {})
         cdb_val = float(bank_data.get('cdb', 0.0))
         ap_val = float(bank_data.get('aporte', 0.0))
+        ret_val = float(bank_data.get('retirada', 0.0))
         jr_val = bank_data.get('juros')
         
         # If juros is not provided explicitly or is empty, we calculate it
@@ -123,7 +124,8 @@ def save_entry():
                 prev_bank_data = db[year][prev_month]['investments'].get(bank, {})
                 prev_cdb = float(prev_bank_data.get('cdb', 0.0))
                 prev_ap = float(prev_bank_data.get('aporte', 0.0))
-                calculated_juros = cdb_val - (prev_cdb + prev_ap)
+                prev_ret = float(prev_bank_data.get('retirada', 0.0))
+                calculated_juros = cdb_val - (prev_cdb + prev_ap - prev_ret)
             elif int(month) == 1:
                 # If January, look for December of previous year
                 prev_year = str(int(year) - 1)
@@ -131,16 +133,18 @@ def save_entry():
                     prev_bank_data = db[prev_year]['12']['investments'].get(bank, {})
                     prev_cdb = float(prev_bank_data.get('cdb', 0.0))
                     prev_ap = float(prev_bank_data.get('aporte', 0.0))
-                    calculated_juros = cdb_val - (prev_cdb + prev_ap)
+                    prev_ret = float(prev_bank_data.get('retirada', 0.0))
+                    calculated_juros = cdb_val - (prev_cdb + prev_ap - prev_ret)
             bank_data['juros'] = round(calculated_juros, 2)
         else:
             bank_data['juros'] = round(float(jr_val), 2)
             
-        # Calculate bank total (CDB + Aporte + Juros)
-        bank_tot = cdb_val + ap_val + float(bank_data.get('juros', 0.0))
+        # Calculate bank total (CDB + Aporte + Juros - Retirada)
+        bank_tot = cdb_val + ap_val + float(bank_data.get('juros', 0.0)) - ret_val
         bank_data['total'] = round(bank_tot, 2)
         bank_data['cdb'] = round(cdb_val, 2)
         bank_data['aporte'] = round(ap_val, 2)
+        bank_data['retirada'] = round(ret_val, 2)
         
     portfolio_tot = sum(float(investments[b].get('total', 0.0)) for b in ['itau', 'bb', 'c6'])
         
@@ -283,6 +287,7 @@ def export_excel():
                 ("CDB, Renda Fixa", "cdb"),
                 ("Juros / Rendimento", "juros"),
                 ("Aporte", "aporte"),
+                ("Retirada", "retirada"),
                 ("Total", "total")
             ]
             
@@ -300,7 +305,7 @@ def export_excel():
                     bank_data = month_data.get("investments", {}).get(bank_key, {})
                     
                     if m_key == "total":
-                        val = float(bank_data.get("cdb", 0.0)) + float(bank_data.get("aporte", 0.0)) + float(bank_data.get("juros", 0.0))
+                        val = float(bank_data.get("cdb", 0.0)) + float(bank_data.get("aporte", 0.0)) + float(bank_data.get("juros", 0.0)) - float(bank_data.get("retirada", 0.0))
                     else:
                         val = float(bank_data.get(m_key, 0.0))
                         
@@ -326,13 +331,14 @@ def export_excel():
                 row_cursor += 1
             row_cursor += 1 # Empty line
             
-        # Consolidation Row (JUROS MENSAIS, APORTES, TOTAL DO MÊS)
+        # Consolidation Row (JUROS MENSAIS, APORTES, RETIRADAS, TOTAL DO MÊS)
         ws.cell(row=row_cursor, column=1, value="CONSOLIDAÇÃO INVESTIMENTOS").font = bold_font
         row_cursor += 1
         
         consol_metrics = [
             ("JUROS MENSAIS", "juros"),
             ("APORTES MENSAIS", "aporte"),
+            ("RETIRADAS MENSAIS", "retirada"),
             ("VALOR TOTAL CARTEIRA", "total")
         ]
         
@@ -343,14 +349,17 @@ def export_excel():
                 col_letter = get_column_letter(3 + m - 1)
                 
                 if c_key == "juros":
-                    # Sum rows: Itaú Juros (Row 6), BB Juros (Row 11), C6 Juros (Row 16)
-                    formula = f"={col_letter}6+{col_letter}11+{col_letter}16"
+                    # Sum rows: Itaú Juros (Row 6), BB Juros (Row 12), C6 Juros (Row 18)
+                    formula = f"={col_letter}6+{col_letter}12+{col_letter}18"
                 elif c_key == "aporte":
-                    # Sum rows: Itaú Aporte (Row 7), BB Aporte (Row 12), C6 Aporte (Row 17)
-                    formula = f"={col_letter}7+{col_letter}12+{col_letter}17"
+                    # Sum rows: Itaú Aporte (Row 7), BB Aporte (Row 13), C6 Aporte (Row 19)
+                    formula = f"={col_letter}7+{col_letter}13+{col_letter}19"
+                elif c_key == "retirada":
+                    # Sum rows: Itaú Retirada (Row 8), BB Retirada (Row 14), C6 Retirada (Row 20)
+                    formula = f"={col_letter}8+{col_letter}14+{col_letter}20"
                 else:
-                    # Sum rows: Itaú Total (Row 8), BB Total (Row 13), C6 Total (Row 18)
-                    formula = f"={col_letter}8+{col_letter}13+{col_letter}18"
+                    # Sum rows: Itaú Total (Row 9), BB Total (Row 15), C6 Total (Row 21)
+                    formula = f"={col_letter}9+{col_letter}15+{col_letter}21"
                     
                 cell = ws.cell(row=row_cursor, column=3 + m - 1, value=formula)
                 cell.number_format = '#,##0.00'

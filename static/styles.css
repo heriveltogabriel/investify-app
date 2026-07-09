@@ -543,6 +543,18 @@ select:focus {
     gap: 10px;
 }
 
+.form-group-row-penta {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+}
+
+@media (max-width: 768px) {
+    .form-group-row-quad, .form-group-row-penta {
+        grid-template-columns: 1fr 1fr !important;
+    }
+}
+
 .form-group {
     display: flex;
     flex-direction: column;

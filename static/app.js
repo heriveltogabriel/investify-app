@@ -609,17 +609,17 @@ function renderKPIs() {
     
     // Itaú
     const itauData = investments.itau || {};
-    const itauTotal = (parseFloat(itauData.cdb) || 0) + (parseFloat(itauData.aporte) || 0) + (parseFloat(itauData.juros) || 0);
+    const itauTotal = (parseFloat(itauData.cdb) || 0) + (parseFloat(itauData.aporte) || 0) + (parseFloat(itauData.juros) || 0) - (parseFloat(itauData.retirada) || 0);
     document.getElementById('kpi-itau-total').textContent = formatBRL(itauTotal);
     
     // C6 Bank
     const c6Data = investments.c6 || {};
-    const c6Total = (parseFloat(c6Data.cdb) || 0) + (parseFloat(c6Data.aporte) || 0) + (parseFloat(c6Data.juros) || 0);
+    const c6Total = (parseFloat(c6Data.cdb) || 0) + (parseFloat(c6Data.aporte) || 0) + (parseFloat(c6Data.juros) || 0) - (parseFloat(c6Data.retirada) || 0);
     document.getElementById('kpi-c6-total').textContent = formatBRL(c6Total);
     
     // Banco do Brasil
     const bbData = investments.bb || {};
-    const bbTotal = (parseFloat(bbData.cdb) || 0) + (parseFloat(bbData.aporte) || 0) + (parseFloat(bbData.juros) || 0);
+    const bbTotal = (parseFloat(bbData.cdb) || 0) + (parseFloat(bbData.aporte) || 0) + (parseFloat(bbData.juros) || 0) - (parseFloat(bbData.retirada) || 0);
     document.getElementById('kpi-bb-total').textContent = formatBRL(bbTotal);
 
     // Total Carteira (Soma dos 3 bancos)
@@ -628,9 +628,9 @@ function renderKPIs() {
 
     // Update bank KPI card descriptions with the active month name
     const activeMonthName = monthNames[latestMonth - 1] || 'mês ativo';
-    document.getElementById('kpi-itau-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
-    document.getElementById('kpi-c6-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
-    document.getElementById('kpi-bb-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros em ${activeMonthName}`;
+    document.getElementById('kpi-itau-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros - Retirada em ${activeMonthName}`;
+    document.getElementById('kpi-c6-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros - Retirada em ${activeMonthName}`;
+    document.getElementById('kpi-bb-total-desc').innerHTML = `<i class="fa-solid fa-clock"></i> CDB + Aporte + Juros - Retirada em ${activeMonthName}`;
     document.getElementById('kpi-total-carteira-fim-desc').innerHTML = `<i class="fa-solid fa-clock"></i> Soma dos 3 bancos em ${activeMonthName}`;
 }
 
@@ -641,6 +641,7 @@ function renderCharts() {
     const incomeData = [];
     const expenseData = [];
     const aporteData = [];
+    const retiradaData = [];
     const labels = monthNames;
 
     const activeMonthsCount = parseInt(selectedMonth) || getLatestMonthIndex(selectedYear);
@@ -664,8 +665,9 @@ function renderCharts() {
             const fixedExp = Object.values(mData.expenses?.fixed || {}).reduce((acc, v) => acc + v, 0);
             const cardExp = Object.values(mData.expenses?.cards || {}).reduce((acc, v) => acc + v, 0);
             
-            // Total Aportes in month
+            // Total Aportes and Retiradas in month
             let ap = 0;
+            let ret = 0;
             if (mData.investments) {
                 for (const bank in mData.investments) {
                     if (bank === 'outros') {
@@ -674,6 +676,7 @@ function renderCharts() {
                         }
                     } else {
                         ap += (mData.investments[bank].aporte || 0);
+                        ret += (mData.investments[bank].retirada || 0);
                     }
                 }
             }
@@ -681,10 +684,12 @@ function renderCharts() {
             incomeData.push(inc);
             expenseData.push(fixedExp + cardExp);
             aporteData.push(ap);
+            retiradaData.push(ret);
         } else {
             incomeData.push(0);
             expenseData.push(0);
             aporteData.push(0);
+            retiradaData.push(0);
         }
     }
 
@@ -827,6 +832,7 @@ function renderCharts() {
     const activeIncome = incomeData.slice(0, activeMonthsCount);
     const activeExpense = expenseData.slice(0, activeMonthsCount);
     const activeAporte = aporteData.slice(0, activeMonthsCount);
+    const activeRetirada = retiradaData.slice(0, activeMonthsCount);
     
     chartCashflow = new Chart(ctxCashflow, {
         type: 'bar',
@@ -849,6 +855,12 @@ function renderCharts() {
                     label: 'Aportes',
                     data: activeAporte,
                     backgroundColor: '#f59e0b',
+                    borderRadius: 4
+                },
+                {
+                    label: 'Retiradas',
+                    data: activeRetirada,
+                    backgroundColor: '#3b82f6',
                     borderRadius: 4
                 }
             ]
@@ -1005,8 +1017,10 @@ function formatLabel(key) {
 }
 
 // Dynamically render forms input fields
-function renderFormDynamicInputs() {
-    discoverKeys();
+function renderFormDynamicInputs(skipDiscover = false) {
+    if (!skipDiscover) {
+        discoverKeys();
+    }
     
     // Render fixed expenses
     const fixedContainer = document.getElementById('fixed-expenses-container');
@@ -1100,7 +1114,7 @@ function addCategory(type) {
     
     // Save current values before re-rendering
     const currentValues = captureFormValues();
-    renderFormDynamicInputs();
+    renderFormDynamicInputs(true);
     restoreFormValues(currentValues);
     
     // Focus the new field
@@ -1234,14 +1248,16 @@ function calculateFormPreview() {
     banksList.forEach(bank => {
         const cdbInput = document.getElementById(`inv-${bank}-cdb`);
         const aporteInput = document.getElementById(`inv-${bank}-aporte`);
+        const retiradaInput = document.getElementById(`inv-${bank}-retirada`);
         const jurosInput = document.getElementById(`inv-${bank}-juros`);
         const totalInput = document.getElementById(`inv-${bank}-total`);
         
         if (cdbInput && totalInput) {
             const cdb = parsePtBrFloat(cdbInput.value);
             const aporte = aporteInput ? parsePtBrFloat(aporteInput.value) : 0;
+            const retirada = retiradaInput ? parsePtBrFloat(retiradaInput.value) : 0;
             const juros = jurosInput ? parsePtBrFloat(jurosInput.value) : 0;
-            const total = cdb + aporte + juros;
+            const total = cdb + aporte + juros - retirada;
             totalInput.value = formatCurrencyString(total);
         }
     });
@@ -1340,14 +1356,17 @@ function populateFormWithExistingData(showToastSuccess = true) {
 
     document.getElementById('inv-itau-cdb').value = formatCurrencyString(itauCdbValue);
     document.getElementById('inv-itau-aporte').value = formatCurrencyString(inv.itau?.aporte || 0);
+    document.getElementById('inv-itau-retirada').value = formatCurrencyString(inv.itau?.retirada || 0);
     document.getElementById('inv-itau-juros').value = itauJurosValue;
     
     document.getElementById('inv-bb-cdb').value = formatCurrencyString(bbCdbValue);
     document.getElementById('inv-bb-aporte').value = formatCurrencyString(inv.bb?.aporte || 0);
+    document.getElementById('inv-bb-retirada').value = formatCurrencyString(inv.bb?.retirada || 0);
     document.getElementById('inv-bb-juros').value = bbJurosValue;
     
     document.getElementById('inv-c6-cdb').value = formatCurrencyString(c6CdbValue);
     document.getElementById('inv-c6-aporte').value = formatCurrencyString(inv.c6?.aporte || 0);
+    document.getElementById('inv-c6-retirada').value = formatCurrencyString(inv.c6?.retirada || 0);
     document.getElementById('inv-c6-juros').value = c6JurosValue;
     
     // Fill expenses fixed
@@ -1425,16 +1444,19 @@ async function handleFormSubmit(e) {
             itau: {
                 cdb: getVal('inv-itau-cdb'),
                 aporte: getVal('inv-itau-aporte'),
+                retirada: getVal('inv-itau-retirada'),
                 juros: getOptionalVal('inv-itau-juros')
             },
             bb: {
                 cdb: getVal('inv-bb-cdb'),
                 aporte: getVal('inv-bb-aporte'),
+                retirada: getVal('inv-bb-retirada'),
                 juros: getOptionalVal('inv-bb-juros')
             },
             c6: {
                 cdb: getVal('inv-c6-cdb'),
                 aporte: getVal('inv-c6-aporte'),
+                retirada: getVal('inv-c6-retirada'),
                 juros: getOptionalVal('inv-c6-juros')
             }
         },
@@ -1606,7 +1628,8 @@ function renderHistoryTables() {
                 { label: "CDB, Renda Fixa", type: "cdb" },
                 { label: "Juros / Rendimento", type: "juros" },
                 { label: "Aporte", type: "aporte" },
-                { label: "Total Fim do Mês (CDB+Aporte)", type: "total" }
+                { label: "Retirada", type: "retirada" },
+                { label: "Total Fim do Mês", type: "total" }
             ];
             
             metrics.forEach(mr => {
@@ -1623,7 +1646,7 @@ function renderHistoryTables() {
                     
                     let val = 0;
                     if (mr.type === 'total') {
-                        val = (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0);
+                        val = (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0) - (parseFloat(bankData.retirada) || 0);
                     } else {
                         val = bankData[mr.type] || 0;
                     }
@@ -1654,6 +1677,7 @@ function renderHistoryTables() {
         const consolMetrics = [
             { label: "JUROS MENSAIS TOTAIS", type: "juros" },
             { label: "APORTES MENSAIS TOTAIS", type: "aporte" },
+            { label: "RETIRADAS MENSAIS TOTAIS", type: "retirada" },
             { label: "VALOR TOTAL DA CARTEIRA", type: "total" }
         ];
         
@@ -1673,7 +1697,7 @@ function renderHistoryTables() {
                     for (const b in mData.investments) {
                         const bankData = mData.investments[b] || {};
                         if (mr.type === 'total') {
-                            sum += (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0);
+                            sum += (parseFloat(bankData.cdb) || 0) + (parseFloat(bankData.aporte) || 0) + (parseFloat(bankData.juros) || 0) - (parseFloat(bankData.retirada) || 0);
                         } else {
                             sum += bankData[mr.type] || 0;
                         }
@@ -3500,13 +3524,16 @@ function renderQuickView() {
 function renderEntriesAportesChart(year) {
     const yearData = financialData[year] || {};
     const monthlyApList = Array(12).fill(0);
+    const monthlyRetList = Array(12).fill(0);
     let totalApYear = 0;
+    let totalRetYear = 0;
     
     for (let m = 1; m <= 12; m++) {
         const mStr = m.toString();
         const mData = yearData[mStr];
         if (mData && mData.investments) {
             let mAp = 0;
+            let mRet = 0;
             for (const bank in mData.investments) {
                 const item = mData.investments[bank];
                 if (bank === 'outros') {
@@ -3515,17 +3542,20 @@ function renderEntriesAportesChart(year) {
                     }
                 } else {
                     mAp += (item.aporte || 0);
+                    mRet += (item.retirada || 0);
                 }
             }
             monthlyApList[m - 1] = mAp;
+            monthlyRetList[m - 1] = mRet;
             totalApYear += mAp;
+            totalRetYear += mRet;
         }
     }
     
     // Update badge text
     const badge = document.getElementById('entries-aportes-total-badge');
     if (badge) {
-        badge.textContent = `Total no Ano: ${formatBRL(totalApYear)}`;
+        badge.textContent = `Aportes: ${formatBRL(totalApYear)} | Retiradas: ${formatBRL(totalRetYear)}`;
     }
     
     // Render Chart
@@ -3539,21 +3569,32 @@ function renderEntriesAportesChart(year) {
         type: 'bar',
         data: {
             labels: monthNames,
-            datasets: [{
-                label: 'Aportes Mensais',
-                data: monthlyApList,
-                backgroundColor: 'rgba(99, 102, 241, 0.65)',
-                hoverBackgroundColor: 'rgba(99, 102, 241, 0.85)',
-                borderColor: '#6366f1',
-                borderWidth: 1,
-                borderRadius: 4
-            }]
+            datasets: [
+                {
+                    label: 'Aportes Mensais',
+                    data: monthlyApList,
+                    backgroundColor: 'rgba(99, 102, 241, 0.65)',
+                    hoverBackgroundColor: 'rgba(99, 102, 241, 0.85)',
+                    borderColor: '#6366f1',
+                    borderWidth: 1,
+                    borderRadius: 4
+                },
+                {
+                    label: 'Retiradas Mensais',
+                    data: monthlyRetList,
+                    backgroundColor: 'rgba(59, 130, 246, 0.65)',
+                    hoverBackgroundColor: 'rgba(59, 130, 246, 0.85)',
+                    borderColor: '#3b82f6',
+                    borderWidth: 1,
+                    borderRadius: 4
+                }
+            ]
         },
         options: {
             responsive: true,
             maintainAspectRatio: false,
             plugins: {
-                legend: { display: false },
+                legend: { display: true, labels: { color: '#9ca3af', font: { family: 'Inter', size: 10 } } },
                 tooltip: {
                     callbacks: {
                         label: function(context) {

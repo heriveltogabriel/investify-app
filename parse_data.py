@@ -300,9 +300,9 @@ def parse_single_col_year(ws, year):
             
         data[month_num] = {
             "investments": {
-                "itau": { "cdb": itau_cdb, "aporte": itau_ap, "juros": itau_jr, "total": itau_tot },
-                "bb": { "cdb": bb_cdb, "aporte": bb_ap, "juros": bb_jr, "total": bb_tot },
-                "c6": { "cdb": c6_cdb, "aporte": c6_ap, "juros": c6_jr, "total": c6_tot }
+                "itau": { "cdb": itau_cdb, "aporte": itau_ap, "juros": itau_jr, "retirada": 0.0, "total": itau_tot },
+                "bb": { "cdb": bb_cdb, "aporte": bb_ap, "juros": bb_jr, "retirada": 0.0, "total": bb_tot },
+                "c6": { "cdb": c6_cdb, "aporte": c6_ap, "juros": c6_jr, "retirada": 0.0, "total": c6_tot }
             },
             "total_carteira": portfolio_tot,
             "expenses": {
