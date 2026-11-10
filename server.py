@@ -43,8 +43,15 @@ def save_db(data):
     with open(JSON_PATH, 'w', encoding='utf-8') as f:
         json.dump(data, f, indent=2, ensure_ascii=False)
 
+# Atrás do nginx do heriveltogabriel.com.br (/investify/), quem entra já passou pelo login
+# único do site (auth_request no PlayVinil); aí a senha própria do Investify fica desligada.
+LOGIN_UNICO = os.environ.get("INVESTIFY_LOGIN_UNICO") == "1"
+
+
 @app.before_request
 def check_authentication():
+    if LOGIN_UNICO:
+        return
     allowed_routes = ['login', 'do_login', 'static']
     if request.endpoint in allowed_routes or not request.endpoint:
         return
@@ -56,7 +63,7 @@ def check_authentication():
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', login_unico=LOGIN_UNICO)
 
 @app.route('/login')
 def login():
@@ -631,4 +638,5 @@ def export_excel():
 if __name__ == '__main__':
     # Ensure static directory exists
     os.makedirs(os.path.join(os.path.dirname(__file__), 'static'), exist_ok=True)
-    app.run(host='0.0.0.0', port=5001, debug=True)
+    # Só acessível pelo próprio servidor (o nginx publica em /investify/ com HTTPS); sem debug.
+    app.run(host=os.environ.get("INVESTIFY_HOST", "127.0.0.1"), port=5001, debug=False)

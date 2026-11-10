@@ -3,7 +3,8 @@ const originalFetch = window.fetch;
 window.fetch = async function(...args) {
     const response = await originalFetch.apply(this, args);
     if (response.status === 401 && !response.url.includes('/api/login')) {
-        window.location.href = '/login';
+        // com o login único do site, volta para a tela de login dele
+        window.location.href = window.INVESTIFY_LOGIN_UNICO ? '/login?next=/investify/' : 'login';
     }
     return response;
 };
@@ -178,7 +179,13 @@ function initApp() {
     const logoutBtn = document.getElementById('btn-logout');
     if (logoutBtn) {
         logoutBtn.addEventListener('click', () => {
-            window.location.href = '/logout';
+            if (window.INVESTIFY_LOGIN_UNICO) {
+                // sai do site inteiro (login único) e volta para a tela de login
+                fetch('/api/auth/logout', { method: 'POST', credentials: 'same-origin' })
+                    .finally(() => { window.location.href = '/login'; });
+            } else {
+                window.location.href = 'logout';
+            }
         });
     }
 
@@ -318,7 +325,7 @@ function updateHeaderTitle() {
 // Fetch general data from API
 async function fetchData() {
     try {
-        const response = await fetch('/api/data');
+        const response = await fetch('api/data');
         financialData = await response.json();
         populateMonthSelector();
         updateUI();
@@ -1468,7 +1475,7 @@ async function handleFormSubmit(e) {
     };
     
     try {
-        const response = await fetch('/api/entry', {
+        const response = await fetch('api/entry', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(payload)
@@ -1516,7 +1523,7 @@ function showToast(title, message, type = 'success') {
 // Trigger Excel export from server
 async function exportToExcel() {
     try {
-        const response = await fetch('/api/export', { method: 'POST' });
+        const response = await fetch('api/export', { method: 'POST' });
         const res = await response.json();
         if (response.ok) {
             showToast('Excel Exportado', `Salvo em: Documents/investimento/Investimentos_Exportado.xlsx`, 'success');
@@ -2234,7 +2241,7 @@ async function syncGoogleSheets() {
     syncBtnText.textContent = 'Sincronizando...';
     
     try {
-        const response = await fetch('/api/import-gsheet', {
+        const response = await fetch('api/import-gsheet', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ url })
