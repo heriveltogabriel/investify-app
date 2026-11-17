@@ -1,19 +1,47 @@
 from flask import Flask, jsonify, request, send_from_directory, session, redirect, url_for, render_template
 import json
 import os
+import re
+import math
 import openpyxl
 from openpyxl.styles import Font, Alignment, PatternFill, Border, Side
 from openpyxl.utils import get_column_letter
 from datetime import timedelta
 
 app = Flask(__name__, static_folder='static', static_url_path='')
-app.secret_key = 'investify-session-secret-key-2026'
+
+
+def _load_secret_key():
+    """Chave da sessão: variável de ambiente ou arquivo local (.secret_key, fora do git), criado na primeira execução."""
+    env_key = os.environ.get('INVESTIFY_SECRET_KEY')
+    if env_key:
+        return env_key
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '.secret_key')
+    try:
+        with open(path) as f:
+            key = f.read().strip()
+            if key:
+                return key
+    except OSError:
+        pass
+    key = os.urandom(32).hex()
+    try:
+        fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+        with os.fdopen(fd, 'w') as f:
+            f.write(key)
+    except OSError:
+        pass
+    return key
+
+
+app.secret_key = _load_secret_key()
 app.permanent_session_lifetime = timedelta(days=7)
 
 JSON_PATH = os.path.join(os.path.dirname(__file__), 'db.json')
 EXCEL_PATH = os.path.join(os.path.dirname(__file__), 'Investimentos.xlsx')
 EXPORT_PATH = os.path.join(os.path.dirname(__file__), 'Investimentos_Exportado.xlsx')
 CONFIG_PATH = os.path.join(os.path.dirname(__file__), 'config.json')
+EXTRAS_PATH = os.path.join(os.path.dirname(__file__), 'extras.json')
 
 def load_credentials():
     if os.path.exists(CONFIG_PATH):
@@ -94,6 +122,94 @@ def logout():
 def get_data():
     db = load_db()
     return jsonify(db)
+
+# ---------------------------------------------------------------------------
+# Extras: bens (imóveis, veículos), anotações por mês e meta de patrimônio.
+# Ficam em extras.json, separado do db.json, que guarda só os lançamentos por ano/mês.
+# ---------------------------------------------------------------------------
+def load_extras():
+    data = {}
+    try:
+        with open(EXTRAS_PATH, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except (FileNotFoundError, ValueError):
+        data = {}
+    if not isinstance(data, dict):
+        data = {}
+    data.setdefault('bens', [])
+    data.setdefault('notas', {})
+    data.setdefault('meta', 0)
+    data.setdefault('plano', {})
+    return data
+
+def _to_amount(value):
+    try:
+        number = float(value)
+    except (TypeError, ValueError):
+        return 0.0
+    return number if number > 0 else 0.0
+
+# Parâmetros do Planejamento: (mínimo, máximo) de cada um
+PLANO_LIMITS = {
+    'juros': (0, 40), 'inflacao': (0, 30), 'crescimento': (0, 30),
+    'bonus': (0, 1e8), 'extra': (0, 1e9), 'extra_ano': (1, 40),
+    'anos': (1, 40), 'swr': (1, 15), 'renda': (0, 1e7),
+}
+
+def clean_plano(raw):
+    plano = {}
+    raw = raw if isinstance(raw, dict) else {}
+    for key, (low, high) in PLANO_LIMITS.items():
+        if key not in raw:
+            continue
+        try:
+            value = float(raw[key])
+        except (TypeError, ValueError):
+            continue
+        if math.isfinite(value):
+            plano[key] = min(high, max(low, value))
+    return plano
+
+def clean_extras(payload):
+    """Aceita só os campos conhecidos, com tipos e tamanhos controlados."""
+    payload = payload if isinstance(payload, dict) else {}
+    bens = []
+    for item in (payload.get('bens') or [])[:50]:
+        if not isinstance(item, dict):
+            continue
+        nome = str(item.get('nome') or '').strip()[:80]
+        desde = str(item.get('desde') or '').strip()
+        if not nome or not re.fullmatch(r'\d{4}-(0[1-9]|1[0-2])', desde):
+            continue
+        tipo = item.get('tipo') if item.get('tipo') in ('imovel', 'veiculo', 'outro') else 'outro'
+        bens.append({
+            'id': str(item.get('id') or '')[:40] or str(len(bens) + 1),
+            'nome': nome,
+            'tipo': tipo,
+            'valor': _to_amount(item.get('valor')),
+            'divida': _to_amount(item.get('divida')),
+            'desde': desde,
+        })
+    notas = {}
+    raw_notas = payload.get('notas') if isinstance(payload.get('notas'), dict) else {}
+    for key, text in list(raw_notas.items())[:600]:
+        text = str(text or '').strip()[:200]
+        if text and re.fullmatch(r'\d{4}-([1-9]|1[0-2])', str(key)):
+            notas[str(key)] = text
+    return {'bens': bens, 'notas': notas, 'meta': _to_amount(payload.get('meta')), 'plano': clean_plano(payload.get('plano'))}
+
+@app.route('/api/extras', methods=['GET'])
+def get_extras():
+    return jsonify(load_extras())
+
+@app.route('/api/extras', methods=['POST'])
+def save_extras():
+    data = clean_extras(request.get_json(silent=True))
+    tmp_path = EXTRAS_PATH + '.tmp'
+    with open(tmp_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    os.replace(tmp_path, EXTRAS_PATH)
+    return jsonify(data)
 
 @app.route('/api/entry', methods=['POST'])
 def save_entry():

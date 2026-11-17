@@ -9,6 +9,7 @@ __pycache__/
 
 # Dados Pessoais (NÃO ENVIAR PARA O GITHUB)
 db.json
+extras.json
 Investimentos.xlsx
 Investimentos_Exportado.xlsx
 Investimentos_Online.xlsx
@@ -19,3 +20,8 @@ Investimentos_Online.xlsx
 
 # Configurações locais
 config.json
+
+# Segredos e acesso ao servidor
+ssh/
+.secret_key
+*.key

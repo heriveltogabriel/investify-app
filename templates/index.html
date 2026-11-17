@@ -11,7 +11,7 @@
     <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <!-- Main Style -->
-    <link rel="stylesheet" href="styles.css?v=1.0.1">
+    <link rel="stylesheet" href="styles.css?v=1.7.0">
     <!-- ChartJS CDN -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
@@ -25,49 +25,37 @@
             </div>
             
             <nav class="nav-menu">
-                <button class="nav-item active" data-tab="dashboard">
-                    <i class="fa-solid fa-gauge"></i>
-                    <span>Dashboard</span>
+                <button class="nav-item active" data-tab="overview">
+                    <i class="fa-solid fa-house-chimney"></i>
+                    <span>Visão Geral</span>
                 </button>
-                <button class="nav-item" data-tab="quick-view">
-                    <i class="fa-solid fa-bolt"></i>
-                    <span>Visão Rápida</span>
+                <button class="nav-item" data-tab="patrimonio">
+                    <i class="fa-solid fa-building-columns"></i>
+                    <span>Patrimônio</span>
                 </button>
-                <button class="nav-item" data-tab="incomes">
-                    <i class="fa-solid fa-hand-holding-dollar"></i>
-                    <span>Receitas</span>
+                <button class="nav-item" data-tab="orcamento">
+                    <i class="fa-solid fa-wallet"></i>
+                    <span>Orçamento</span>
                 </button>
-                <button class="nav-item" data-tab="fixed-expenses">
-                    <i class="fa-solid fa-house"></i>
-                    <span>Gastos Fixos</span>
+                <button class="nav-item" data-tab="lancar">
+                    <i class="fa-solid fa-pen-to-square"></i>
+                    <span>Lançar mês</span>
                 </button>
-                <button class="nav-item" data-tab="card-expenses">
-                    <i class="fa-solid fa-credit-card"></i>
-                    <span>Gastos com Cartão</span>
+                <button class="nav-item" data-tab="planejamento">
+                    <i class="fa-solid fa-bullseye"></i>
+                    <span>Planejamento</span>
                 </button>
-                <button class="nav-item" data-tab="entries">
-                    <i class="fa-solid fa-money-bill-transfer"></i>
-                    <span>Lançamentos</span>
-                </button>
-                <button class="nav-item" data-tab="history">
-                    <i class="fa-solid fa-clock-rotate-left"></i>
+                <button class="nav-item" data-tab="historico">
+                    <i class="fa-solid fa-table"></i>
                     <span>Histórico</span>
-                </button>
-                <button class="nav-item" data-tab="simulator">
-                    <i class="fa-solid fa-wand-magic-sparkles"></i>
-                    <span>Simulador</span>
-                </button>
-                <button class="nav-item" data-tab="adv-simulator">
-                    <i class="fa-solid fa-chart-line"></i>
-                    <span>Simulador Pro</span>
-                </button>
-                <button class="nav-item" data-tab="settings">
-                    <i class="fa-solid fa-gear"></i>
-                    <span>Configurações</span>
                 </button>
             </nav>
             
             <div class="sidebar-footer">
+                <button class="nav-item nav-item-footer" data-tab="settings">
+                    <i class="fa-solid fa-gear"></i>
+                    <span>Configurações</span>
+                </button>
                 <button class="btn btn-secondary btn-block" id="btn-export-excel" style="margin-bottom: 8px;">
                     <i class="fa-solid fa-file-excel"></i>
                     <span>Exportar Excel</span>
@@ -85,8 +73,8 @@
             <!-- Header -->
             <header class="content-header">
                 <div>
-                    <h1 id="page-title">Dashboard Geral</h1>
-                    <p class="subtitle" id="page-subtitle">Visão unificada das suas finanças e investimentos.</p>
+                    <h1 id="page-title">Visão Geral</h1>
+                    <p class="subtitle" id="page-subtitle">Patrimônio, orçamento do mês e meta em uma tela.</p>
                 </div>
                 
                 <div class="header-actions">
@@ -107,1175 +95,391 @@
                 </div>
             </header>
 
-            <!-- TAB 1: DASHBOARD -->
-            <section class="tab-content active" id="tab-dashboard">
+            <div id="pending-notice" class="pending-notice" style="display: none;"></div>
 
-                <!-- Bank Summary KPI cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper pat" style="background: rgba(236, 112, 0, 0.15); color: #ec7000;">
-                            <i class="fa-solid fa-building-columns"></i>
+            <!-- VISÃO GERAL (tela inicial) -->
+            <section class="tab-content active" id="tab-overview">
+                <div class="ov-empty" id="ov-empty" style="display: none;"></div>
+                <div id="ov-body">
+                    <div class="ov-top">
+                        <div class="ov-card ov-hero">
+                            <div class="ov-hero-head">
+                                <div>
+                                    <p class="ov-label" id="ov-nw-label">Patrimônio investido</p>
+                                    <p class="ov-hero-value" id="ov-nw-value">R$ 0,00</p>
+                                    <p class="ov-delta" id="ov-nw-delta"></p>
+                                    <p class="ov-total" id="ov-nw-total" style="display: none;"></p>
+                                </div>
+                                <div class="ov-range" id="ov-range" role="group" aria-label="Período dos gráficos">
+                                    <button type="button" data-range="12" class="active">12 meses</button>
+                                    <button type="button" data-range="all">Tudo</button>
+                                </div>
+                            </div>
+                            <div class="ov-chart ov-chart-tall"><canvas id="ov-chart-networth"></canvas></div>
+                            <div class="table-responsive">
+                                <table class="ov-breakdown" id="ov-breakdown"></table>
+                            </div>
                         </div>
-                        <div class="kpi-info">
-                            <h3>Itau Fim do Mês</h3>
-                            <p class="kpi-value" id="kpi-itau-total">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-itau-total-desc">
-                                CDB + Aporte + Juros
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper pat" style="background: rgba(255, 255, 255, 0.15); color: #ffffff;">
-                            <i class="fa-solid fa-building-columns"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>C6 Bank Fim do Mês</h3>
-                            <p class="kpi-value" id="kpi-c6-total">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-c6-total-desc">
-                                CDB + Aporte + Juros
-                            </span>
-                        </div>
-                    </div>
-
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper pat" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                            <i class="fa-solid fa-building-columns"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>BB Fim do Mês</h3>
-                            <p class="kpi-value" id="kpi-bb-total">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-bb-total-desc">
-                                CDB + Aporte + Juros
-                            </span>
+                        <div class="ov-side">
+                            <div class="ov-card">
+                                <h3 class="ov-title">Meta de patrimônio</h3>
+                                <div id="ov-goal"></div>
+                            </div>
+                            <div class="ov-card">
+                                <h3 class="ov-title">Onde está investido</h3>
+                                <div id="ov-banks"></div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper pat" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
-                            <i class="fa-solid fa-wallet"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Total Carteira</h3>
-                            <p class="kpi-value" id="kpi-total-carteira-fim">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-total-carteira-fim-desc">
-                                Soma dos 3 bancos
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- KPI cards -->
-                <div class="kpi-grid" style="margin-top: 20px;">
-
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper aporte">
-                            <i class="fa-solid fa-circle-dollar-to-slot"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Aportes no Ano</h3>
-                            <p class="kpi-value" id="kpi-aportes">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-aportes-count">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper yield">
-                            <i class="fa-solid fa-percent"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Rendimento do Ano</h3>
-                            <p class="kpi-value" id="kpi-yield">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-yield-rate">
-                                Carregando...
-                            </span>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title" id="ov-budget-title">Orçamento do mês</h3>
+                        <div class="ov-budget" id="ov-budget"></div>
                     </div>
 
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper yield" style="background: rgba(139, 92, 246, 0.15); color: #8b5cf6;">
-                            <i class="fa-solid fa-chart-line"></i>
+                    <div class="ov-charts">
+                        <div class="ov-card">
+                            <h3 class="ov-title">Receita e despesa por mês</h3>
+                            <p class="ov-sub">Mês com rótulo em vermelho: a despesa passou da receita.</p>
+                            <ul class="ov-legend" aria-label="Legenda">
+                                <li><span class="ov-swatch" style="background: #0ea371;"></span>Receita</li>
+                                <li><span class="ov-swatch" style="background: #6366f1;"></span>Gastos fixos</li>
+                                <li><span class="ov-swatch" style="background: #d97706;"></span>Cartões</li>
+                            </ul>
+                            <div class="ov-chart"><canvas id="ov-chart-budget"></canvas></div>
                         </div>
-                        <div class="kpi-info">
-                            <h3>Rendimento do Mês</h3>
-                            <p class="kpi-value" id="kpi-month-yield">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-month-yield-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper aporte" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                            <i class="fa-solid fa-hand-holding-dollar"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Aporte do Mês</h3>
-                            <p class="kpi-value" id="kpi-month-aporte">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-month-aporte-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper savings">
-                            <i class="fa-solid fa-piggy-bank"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Economia do Mês</h3>
-                            <p class="kpi-value" id="kpi-savings">R$ 0,00</p>
-                            <span class="kpi-trend" id="kpi-savings-rate">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="charts-grid">
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Evolução Patrimonial</h3>
-                            <span class="chart-subtitle">Crescimento acumulado de investimentos mês a mês</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-networth-growth"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Alocação por Instituição</h3>
-                            <span class="chart-subtitle">Distribuição do saldo atual de investimentos</span>
-                        </div>
-                        <div class="chart-wrapper doughnut">
-                            <canvas id="chart-allocation"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Fluxo de Caixa Mensal</h3>
-                            <span class="chart-subtitle">Comparativo entre Receitas, Despesas e Aportes</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-cashflow"></canvas>
-                        </div>
-                    </div>
-                    
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Composição das Despesas</h3>
-                            <span class="chart-subtitle">Gastos fixos do mês de referência</span>
-                        </div>
-                        <div class="chart-wrapper doughnut">
-                            <canvas id="chart-expenses-pie"></canvas>
+                        <div class="ov-card">
+                            <h3 class="ov-title">De onde veio o crescimento</h3>
+                            <p class="ov-sub">Quanto do patrimônio veio de dinheiro novo e quanto veio de rendimento.</p>
+                            <ul class="ov-legend" aria-label="Legenda">
+                                <li><span class="ov-swatch" style="background: #6366f1;"></span>Aporte líquido</li>
+                                <li><span class="ov-swatch" style="background: #d97706;"></span>Rendimento</li>
+                            </ul>
+                            <div class="ov-chart"><canvas id="ov-chart-growth"></canvas></div>
                         </div>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB: VISÃO RÁPIDA (CONFRONTO DE CONTAS) -->
-            <section class="tab-content" id="tab-quick-view">
-                <!-- Main KPIs -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon income"><i class="fa-solid fa-arrow-trend-up"></i></div>
-                        <div class="kpi-info">
-                            <p class="kpi-title">Receita do Mês</p>
-                            <p class="kpi-value" id="kpi-quick-income">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-quick-income-desc">
-                                <i class="fa-solid fa-clock"></i> Mês de referência
-                            </span>
-                        </div>
+            <!-- PATRIMÔNIO -->
+            <section class="tab-content" id="tab-patrimonio">
+                <div class="ov-empty" id="pat-empty" style="display: none;"></div>
+                <div id="pat-body">
+                    <div class="ov-card">
+                        <div class="ov-budget pat-summary" id="pat-summary"></div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon expense"><i class="fa-solid fa-arrow-trend-down"></i></div>
-                        <div class="kpi-info">
-                            <p class="kpi-title">Despesa do Mês</p>
-                            <p class="kpi-value" id="kpi-quick-expenses">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-quick-expenses-desc">
-                                <i class="fa-solid fa-clock"></i> Fixo + Cartões
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon investment"><i class="fa-solid fa-piggy-bank"></i></div>
-                        <div class="kpi-info">
-                            <p class="kpi-title">Aporte do Mês</p>
-                            <p class="kpi-value" id="kpi-quick-aporte">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-quick-aporte-desc">
-                                <i class="fa-solid fa-clock"></i> Total investido
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon yield"><i class="fa-solid fa-coins"></i></div>
-                        <div class="kpi-info">
-                            <p class="kpi-title">Rendimento do Mês</p>
-                            <p class="kpi-value" id="kpi-quick-yield">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-quick-yield-desc">
-                                <i class="fa-solid fa-chart-line"></i> Juros auferidos
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Secondary Summary Bar -->
-                <div class="quick-summary-bar">
-                    <div class="summary-item">
-                        <span>Sobra Líquida (Dia a Dia):</span>
-                        <strong id="kpi-quick-net-cashflow">R$ 0,00</strong>
+                    <div class="ov-card">
+                        <div class="ov-hero-head">
+                            <div>
+                                <h3 class="ov-title">Evolução do patrimônio</h3>
+                                <ul class="ov-legend" id="pat-legend" aria-label="Legenda">
+                                    <li><span class="ov-swatch" style="background: #6366f1;"></span>Investimentos financeiros</li>
+                                    <li><span class="ov-swatch" style="background: #d97706;"></span>Bens</li>
+                                </ul>
+                            </div>
+                            <div class="ov-range" id="pat-range" role="group" aria-label="Período do gráfico">
+                                <button type="button" data-range="12">12 meses</button>
+                                <button type="button" data-range="all" class="active">Tudo</button>
+                            </div>
+                        </div>
+                        <div class="ov-chart ov-chart-tall"><canvas id="pat-chart"></canvas></div>
+                        <ul class="pat-notes" id="pat-notes"></ul>
                     </div>
-                    <div class="summary-item">
-                        <span>Taxa de Poupança Real:</span>
-                        <strong id="kpi-quick-savings-rate">0%</strong>
-                    </div>
-                </div>
 
-                <!-- Chart Grid -->
-                <div class="charts-grid" style="margin-top: 25px;">
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Balanço do Mês</h3>
-                            <span class="chart-subtitle">Confronto direto das quatro vertentes</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-quick-confrontation"></canvas>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title" id="pat-banks-title">Por banco</h3>
+                        <div class="table-responsive"><table class="pat-table" id="pat-banks"></table></div>
                     </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Evolução das Vertentes no Ano</h3>
-                            <span class="chart-subtitle">Trajetória mensal de receitas, despesas, aportes e rendimentos</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-quick-evolution"></canvas>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Confrontation Table -->
-                <div class="table-card" style="margin-top: 25px;">
-                    <div class="table-header">
-                        <h3>Diferencial e Confronto Mensal</h3>
-                        <span class="table-subtitle">Tabela resumida das movimentações e sobra líquida por mês</span>
+                    <div class="ov-card">
+                        <h3 class="ov-title" id="pat-months-title">Mês a mês</h3>
+                        <div class="table-responsive"><table class="pat-table" id="pat-months"></table></div>
                     </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-quick-confrontation">
-                            <!-- Populated via JS -->
-                        </table>
+
+                    <div class="ov-card">
+                        <h3 class="ov-title">Bens</h3>
+                        <p class="ov-sub">Imóveis, veículos e outros bens entram no patrimônio total a partir do mês de aquisição, pelo valor que você estimar menos a dívida.</p>
+                        <div id="pat-assets"></div>
+                        <form class="pat-asset-form" id="pat-asset-form" novalidate>
+                            <div class="pat-field pat-field-wide">
+                                <label for="pat-asset-name">Nome</label>
+                                <input type="text" id="pat-asset-name" maxlength="80" placeholder="Apartamento" autocomplete="off">
+                            </div>
+                            <div class="pat-field">
+                                <label for="pat-asset-type">Tipo</label>
+                                <select id="pat-asset-type">
+                                    <option value="imovel">Imóvel</option>
+                                    <option value="veiculo">Veículo</option>
+                                    <option value="outro">Outro</option>
+                                </select>
+                            </div>
+                            <div class="pat-field">
+                                <label for="pat-asset-since">Mês de aquisição</label>
+                                <input type="month" id="pat-asset-since">
+                            </div>
+                            <div class="pat-field">
+                                <label for="pat-asset-value">Valor estimado (R$)</label>
+                                <input type="text" id="pat-asset-value" inputmode="decimal" placeholder="0,00" autocomplete="off">
+                            </div>
+                            <div class="pat-field">
+                                <label for="pat-asset-debt">Dívida atual (R$)</label>
+                                <input type="text" id="pat-asset-debt" inputmode="decimal" placeholder="0,00" autocomplete="off">
+                            </div>
+                            <div class="pat-actions">
+                                <button type="submit" class="btn btn-primary" id="pat-asset-submit">Adicionar bem</button>
+                                <button type="button" class="btn btn-secondary" id="pat-asset-cancel" style="display: none;">Cancelar</button>
+                            </div>
+                            <p class="pat-error" id="pat-asset-error" role="alert"></p>
+                        </form>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB: RECEITAS -->
-            <section class="tab-content" id="tab-incomes">
-                <!-- KPI cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper pat">
-                            <i class="fa-solid fa-sack-dollar"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Receita Total no Ano</h3>
-                            <p class="kpi-value" id="kpi-inc-total">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-inc-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
+            <!-- PLANEJAMENTO -->
+            <section class="tab-content" id="tab-planejamento">
+                <div class="ov-empty" id="pl-empty" style="display: none;"></div>
+                <div id="pl-body">
+                    <div class="ov-card">
+                        <h3 class="ov-title">Ponto de partida</h3>
+                        <p class="ov-sub">Calculado com os seus lançamentos. Os campos ao lado já abrem com esses valores, e você pode alterá-los para simular outros cenários.</p>
+                        <div class="ov-budget" id="pl-real"></div>
                     </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper savings" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
-                            <i class="fa-solid fa-money-check-dollar"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Receita Salário do Mês</h3>
-                            <p class="kpi-value" id="kpi-inc-salary-month">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-inc-salary-month-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper aporte" style="background: rgba(245, 158, 11, 0.15); color: #f59e0b;">
-                            <i class="fa-solid fa-house-laptop"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Aluguéis do Mês</h3>
-                            <p class="kpi-value" id="kpi-inc-rent-month">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-inc-rent-month-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper yield" style="background: rgba(16, 185, 129, 0.15); color: #10b981;">
-                            <i class="fa-solid fa-calendar-check"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Receita Do Mês</h3>
-                            <p class="kpi-value" id="kpi-inc-month-total">R$ 0,00</p>
-                            <span class="kpi-trend positive" id="kpi-inc-month-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                </div>
 
-                <!-- Charts Section -->
-                <div class="charts-grid">
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Evolução Mensal de Receitas</h3>
-                            <span class="chart-subtitle">Detalhamento de Salários, Aluguel e Receitas Extras mês a mês</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-inc-evolution"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Composição de Receitas</h3>
-                            <span class="chart-subtitle">Proporção acumulada de fontes de receita no ano</span>
-                        </div>
-                        <div class="chart-wrapper doughnut">
-                            <canvas id="chart-inc-composition"></canvas>
-                        </div>
-                    </div>
-                </div>
+                    <div class="pl-layout">
+                        <form class="ov-card pl-params" id="pl-form" novalidate>
+                            <fieldset>
+                                <legend>Meta</legend>
+                                <div class="pat-field">
+                                    <label for="pl-meta">Patrimônio desejado (R$, em valores de hoje)</label>
+                                    <input type="text" id="pl-meta" class="currency-input" inputmode="numeric" placeholder="1.500.000,00" autocomplete="off">
+                                    
+                                </div>
+                                <div class="pat-field">
+                                    <label for="pl-renda">Renda mensal desejada (R$)</label>
+                                    <input type="text" id="pl-renda" class="currency-input" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                                    <p class="pl-hint">Opcional. Vira um patrimônio necessário pela taxa de retirada abaixo.</p>
+                                </div>
+                                <div class="pat-field pl-slider">
+                                    <label for="pl-swr">Taxa de retirada segura (% ao ano): <output id="pl-swr-out"></output></label>
+                                    <input type="range" id="pl-swr" min="2" max="8" step="0.2">
+                                </div>
+                            </fieldset>
+                            <fieldset>
+                                <legend>Aportes</legend>
+                                <div class="pat-field">
+                                    <label for="pl-capital">Patrimônio inicial (R$)</label>
+                                    <input type="text" id="pl-capital" class="currency-input" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                                    
+                                </div>
+                                <div class="pat-field">
+                                    <label for="pl-aporte">Aporte mensal (R$)</label>
+                                    <input type="text" id="pl-aporte" class="currency-input" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                                    
+                                </div>
+                                <div class="pat-field pl-slider">
+                                    <label for="pl-cresc">Reajuste anual do aporte (%): <output id="pl-cresc-out"></output></label>
+                                    <input type="range" id="pl-cresc" min="0" max="15" step="0.5">
+                                </div>
+                                <div class="pat-field">
+                                    <label for="pl-bonus">Aporte anual extra, como 13º ou bônus (R$)</label>
+                                    <input type="text" id="pl-bonus" class="currency-input" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                                    
+                                </div>
+                                <div class="pat-field">
+                                    <label for="pl-extra">Aporte extra único (R$)</label>
+                                    <input type="text" id="pl-extra" class="currency-input" inputmode="numeric" placeholder="0,00" autocomplete="off">
+                                    
+                                </div>
+                                <div class="pat-field">
+                                    <label for="pl-extra-ano">Ano do aporte extra único</label>
+                                    <input type="number" id="pl-extra-ano" min="1" max="40" step="1">
+                                </div>
+                                <button type="button" class="ov-link" id="pl-reset-real">Voltar ao patrimônio e ao aporte reais</button>
+                            </fieldset>
+                            <fieldset>
+                                <legend>Rendimento e prazo</legend>
+                                <div class="pat-field pl-slider">
+                                    <label for="pl-juros">Rendimento anual (%): <output id="pl-juros-out"></output></label>
+                                    <input type="range" id="pl-juros" min="1" max="25" step="0.1">
+                                </div>
+                                <div class="pl-presets" id="pl-presets" role="group" aria-label="Valores de referência para o rendimento"></div>
+                                <div class="pat-field pl-slider">
+                                    <label for="pl-infl">Inflação anual (%): <output id="pl-infl-out"></output></label>
+                                    <input type="range" id="pl-infl" min="0" max="15" step="0.1">
+                                </div>
+                                <div class="pat-field pl-slider">
+                                    <label for="pl-anos">Prazo da simulação (anos): <output id="pl-anos-out"></output></label>
+                                    <input type="range" id="pl-anos" min="1" max="40" step="1">
+                                </div>
+                            </fieldset>
+                            <p class="pl-saved" id="pl-saved" aria-live="polite"></p>
+                        </form>
 
-                <!-- Detailed Table -->
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Detalhamento das Receitas</h3>
-                        <p class="subtitle">Acompanhamento mensal detalhado de todas as fontes de receitas no ano.</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-inc-details">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB: GASTOS FIXOS -->
-            <section class="tab-content" id="tab-fixed-expenses">
-                <!-- KPI cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-house-circle-exclamation"></i>
+                        <div class="pl-results">
+                            <div class="ov-card pl-answer" id="pl-answer"></div>
+                            <div class="ov-card">
+                                <h3 class="ov-title">Evolução do patrimônio</h3>
+                                <ul class="ov-legend" aria-label="Legenda">
+                                    <li><span class="ov-swatch" style="background: #6366f1;"></span>Patrimônio</li>
+                                    <li><span class="ov-swatch" style="background: #0ea371;"></span>Em valores de hoje</li>
+                                    <li><span class="ov-swatch" style="background: #d97706;"></span>Total aportado</li>
+                                    <li><span class="ov-swatch" style="background: #9ca3af;"></span>Meta</li>
+                                </ul>
+                                <div class="ov-chart ov-chart-tall"><canvas id="pl-chart"></canvas></div>
+                            </div>
+                            <div class="ov-card">
+                                <h3 class="ov-title" id="pl-end-title">No fim do prazo</h3>
+                                <div class="pl-stats" id="pl-stats"></div>
+                            </div>
+                            <details class="ov-card orc-details">
+                                <summary><span class="ov-title">Ano a ano</span><span class="ov-muted">valores em R$</span></summary>
+                                <div class="table-responsive"><table class="pat-table orc-dense" id="pl-years"></table></div>
+                            </details>
                         </div>
-                        <div class="kpi-info">
-                            <h3>Total de Gastos Fixos</h3>
-                            <p class="kpi-value" id="kpi-fixed-total">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-fixed-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-calendar-day"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Total dos Gastos do mês</h3>
-                            <p class="kpi-value" id="kpi-fixed-month-total">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-fixed-month-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-circle-exclamation"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Maior Gasto do Mês</h3>
-                            <p class="kpi-value" id="kpi-fixed-month-highest">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-fixed-month-highest-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper yield">
-                            <i class="fa-solid fa-calculator"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Média Mensal</h3>
-                            <p class="kpi-value" id="kpi-fixed-average">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-fixed-average-desc">
-                                Média de meses ativos
-                            </span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Charts Section -->
-                <div class="charts-grid">
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Evolução Mensal de Gastos Fixos</h3>
-                            <span class="chart-subtitle">Despesas mensais fixas por categoria</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-fixed-evolution"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Distribuição dos Gastos Fixos</h3>
-                            <span class="chart-subtitle">Proporção média de cada item nas despesas fixas</span>
-                        </div>
-                        <div class="chart-wrapper doughnut">
-                            <canvas id="chart-fixed-distribution"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Detailed Table -->
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Detalhamento dos Gastos Fixos</h3>
-                        <p class="subtitle">Acompanhamento mensal detalhado de todas as despesas fixas.</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-fixed-details">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
                     </div>
                 </div>
             </section>
 
-            <!-- TAB: GASTOS COM CARTÃO -->
-            <section class="tab-content" id="tab-card-expenses">
-                <!-- KPI cards -->
-                <div class="kpi-grid">
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Total com Cartões</h3>
-                            <p class="kpi-value" id="kpi-card-total">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-card-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Cartão Mastercard Itaú</h3>
-                            <p class="kpi-value" id="kpi-card-itau-month">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-card-itau-month-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>C6 Visa</h3>
-                            <p class="kpi-value" id="kpi-card-c6-month">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-card-c6-month-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-credit-card"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>BB Elo</h3>
-                            <p class="kpi-value" id="kpi-card-bb-month">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-card-bb-month-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                    <div class="kpi-card">
-                        <div class="kpi-icon-wrapper expense-kpi-icon" style="background: rgba(239, 68, 68, 0.15); color: #ef4444;">
-                            <i class="fa-solid fa-calculator"></i>
-                        </div>
-                        <div class="kpi-info">
-                            <h3>Total Mensal Cartões</h3>
-                            <p class="kpi-value" id="kpi-card-month-total">R$ 0,00</p>
-                            <span class="kpi-trend negative" id="kpi-card-month-total-desc">
-                                Carregando...
-                            </span>
-                        </div>
-                    </div>
-                </div>
+            <!-- LANÇAR MÊS -->
+            <section class="tab-content" id="tab-lancar">
+                <form id="lan-form" novalidate>
+                    <p class="lan-status" id="lan-status"></p>
 
-                <!-- Charts Section -->
-                <div class="charts-grid">
-                    <div class="chart-card large">
-                        <div class="chart-header">
-                            <h3>Evolução Mensal das Faturas</h3>
-                            <span class="chart-subtitle">Faturas consolidadas de cartão de crédito mês a mês</span>
-                        </div>
-                        <div class="chart-wrapper">
-                            <canvas id="chart-card-evolution"></canvas>
-                        </div>
-                    </div>
-                    <div class="chart-card">
-                        <div class="chart-header">
-                            <h3>Distribuição por Cartão</h3>
-                            <span class="chart-subtitle">Proporção de gastos acumulados em cada cartão</span>
-                        </div>
-                        <div class="chart-wrapper doughnut">
-                            <canvas id="chart-card-distribution"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Detailed Table -->
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Detalhamento das Faturas de Cartões</h3>
-                        <p class="subtitle">Acompanhamento mensal detalhado de todas as faturas de cartões de crédito.</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-card-details">
-                            <thead></thead>
-                            <tbody></tbody>
-                        </table>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB 2: ENTRIES (LANÇAMENTOS) -->
-            <section class="tab-content" id="tab-entries">
-                <form id="entry-form" class="entry-form">
-                    <div class="form-grid-header">
-                        <div class="form-group select-time">
-                            <label for="entry-year"><i class="fa-regular fa-calendar"></i> Ano</label>
-                            <select id="entry-year" required>
-                                <option value="2026">2026</option>
-                                <option value="2025">2025</option>
-                                <option value="2024">2024</option>
-                                <option value="2027">2027</option>
-                            </select>
-                        </div>
-                        <div class="form-group select-time">
-                            <label for="entry-month"><i class="fa-regular fa-clock"></i> Mês</label>
-                            <select id="entry-month" required>
-                                <option value="1">Janeiro</option>
-                                <option value="2">Fevereiro</option>
-                                <option value="3">Março</option>
-                                <option value="4">Abril</option>
-                                <option value="5" selected>Maio</option>
-                                <option value="6">Junho</option>
-                                <option value="7">Julho</option>
-                                <option value="8">Agosto</option>
-                                <option value="9">Setembro</option>
-                                <option value="10">Outubro</option>
-                                <option value="11">Novembro</option>
-                                <option value="12">Dezembro</option>
-                            </select>
-                        </div>
-                        <button type="button" class="btn btn-secondary" id="btn-load-existing">
-                            <i class="fa-solid fa-arrows-rotate"></i> Carregar dados
-                        </button>
+                    <div class="ov-card">
+                        <h3 class="ov-title">Receitas</h3>
+                        <div class="lan-grid" id="lan-incomes"></div>
+                            <div class="lan-add" data-type="income">
+                                <label for="lan-add-income">Nova fonte de receita</label>
+                                <div class="lan-add-row">
+                                    <input type="text" id="lan-add-income" maxlength="40" placeholder="Ex.: freelance" autocomplete="off">
+                                    <button type="button" class="btn btn-secondary">Adicionar</button>
+                                </div>
+                                <p class="lan-add-msg" role="alert"></p>
+                            </div>
                     </div>
 
-                    <!-- Sub-tabs Navigation -->
-                    <div class="sub-tabs-nav">
-                        <button type="button" class="sub-tab-btn active" data-subtab="investments">
-                            <i class="fa-solid fa-building-columns"></i>
-                            <span>Investimentos</span>
-                        </button>
-                        <button type="button" class="sub-tab-btn" data-subtab="expenses">
-                            <i class="fa-solid fa-receipt"></i>
-                            <span>Despesas</span>
-                        </button>
-                        <button type="button" class="sub-tab-btn" data-subtab="incomes">
-                            <i class="fa-solid fa-hand-holding-dollar"></i>
-                            <span>Receitas</span>
-                        </button>
+                    <div class="ov-card">
+                        <h3 class="ov-title">Gastos fixos</h3>
+                        <div class="lan-grid" id="lan-fixed"></div>
+                            <div class="lan-add" data-type="fixed">
+                                <label for="lan-add-fixed">Novo gasto fixo</label>
+                                <div class="lan-add-row">
+                                    <input type="text" id="lan-add-fixed" maxlength="40" placeholder="Ex.: academia" autocomplete="off">
+                                    <button type="button" class="btn btn-secondary">Adicionar</button>
+                                </div>
+                                <p class="lan-add-msg" role="alert"></p>
+                            </div>
                     </div>
 
-                    <!-- Mini KPI Summary Bar -->
-                    <div class="entries-summary-bar">
-                        <div class="bar-item">
-                            <span>Receita Total:</span>
-                            <strong id="preview-income">R$ 0,00</strong>
-                        </div>
-                        <div class="bar-item">
-                            <span>Despesa Total:</span>
-                            <strong id="preview-expenses">R$ 0,00</strong>
-                        </div>
-                        <div class="bar-item">
-                            <span>Sobra Estimada:</span>
-                            <strong id="preview-leftover">R$ 0,00</strong>
-                        </div>
-                        <div class="bar-item highlight">
-                            <span>Aporte Total Planejado:</span>
-                            <strong id="preview-aportes">R$ 0,00</strong>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title">Faturas de cartão</h3>
+                        <div class="lan-grid" id="lan-cards"></div>
+                            <div class="lan-add" data-type="card">
+                                <label for="lan-add-card">Novo cartão</label>
+                                <div class="lan-add-row">
+                                    <input type="text" id="lan-add-card" maxlength="40" placeholder="Ex.: Nubank" autocomplete="off">
+                                    <button type="button" class="btn btn-secondary">Adicionar</button>
+                                </div>
+                                <p class="lan-add-msg" role="alert"></p>
+                            </div>
                     </div>
 
-                    <!-- Sub-tab Panels -->
-                    <!-- Sub-tab 1: Investments -->
-                    <div class="sub-tab-content active" id="subtab-investments">
-                        <div class="form-card-column" style="width: 100%;">
-                            <div class="column-header">
-                                <i class="fa-solid fa-building-columns"></i>
-                                <h2>Investimentos (Saldos & Aportes)</h2>
-                            </div>
-                            
-                            <!-- Monthly Aportes Summary and Chart -->
-                            <div class="entries-aportes-analysis-card" style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 14px; padding: 20px; margin-bottom: 25px;">
-                                <div class="aportes-analysis-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                                    <h3 style="font-family: var(--font-heading); font-size: 14px; font-weight: 700; margin: 0;">Histórico de Aportes e Retiradas Mês a Mês</h3>
-                                    <span class="analysis-total" id="entries-aportes-total-badge" style="font-size: 12px; font-weight: 600; color: var(--accent-color); background: rgba(99, 102, 241, 0.12); padding: 4px 10px; border-radius: 8px;">Total no Ano: R$ 0,00</span>
-                                </div>
-                                <div class="chart-wrapper entries-aportes-chart-wrapper" style="height: 160px; position: relative;">
-                                    <canvas id="chart-entries-aportes"></canvas>
-                                </div>
-                            </div>
-                            
-                            <!-- Itaú -->
-                            <div class="bank-entry-group">
-                                <h3>Itaú CDB</h3>
-                                <div class="form-group-row-penta">
-                                    <div class="form-group">
-                                        <label for="inv-itau-cdb">Saldo CDB (R$)</label>
-                                        <input type="text" id="inv-itau-cdb" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-itau-aporte">Aporte (R$)</label>
-                                        <input type="text" id="inv-itau-aporte" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-itau-retirada">Retirada (R$)</label>
-                                        <input type="text" id="inv-itau-retirada" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-itau-juros">Juros / Rendimento (R$)</label>
-                                        <input type="text" id="inv-itau-juros" class="currency-input" placeholder="0,00" value="">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-itau-total">Total Fim do Mês (R$)</label>
-                                        <input type="text" id="inv-itau-total" class="currency-input" placeholder="0,00" value="0,00" disabled style="background: rgba(255, 255, 255, 0.05); color: #9ca3af; border: 1px solid rgba(255, 255, 255, 0.1); cursor: not-allowed;">
-                                    </div>
-                                </div>
-                                <div class="form-actions-inline">
-                                    <button type="submit" class="btn btn-primary btn-sm btn-save-section" data-section="itau">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar Itaú
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- Banco do Brasil -->
-                            <div class="bank-entry-group">
-                                <h3>Banco do Brasil CDB</h3>
-                                <div class="form-group-row-penta">
-                                    <div class="form-group">
-                                        <label for="inv-bb-cdb">Saldo CDB (R$)</label>
-                                        <input type="text" id="inv-bb-cdb" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-bb-aporte">Aporte (R$)</label>
-                                        <input type="text" id="inv-bb-aporte" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-bb-retirada">Retirada (R$)</label>
-                                        <input type="text" id="inv-bb-retirada" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-bb-juros">Juros / Rendimento (R$)</label>
-                                        <input type="text" id="inv-bb-juros" class="currency-input" placeholder="0,00" value="">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-bb-total">Total Fim do Mês (R$)</label>
-                                        <input type="text" id="inv-bb-total" class="currency-input" placeholder="0,00" value="0,00" disabled style="background: rgba(255, 255, 255, 0.05); color: #9ca3af; border: 1px solid rgba(255, 255, 255, 0.1); cursor: not-allowed;">
-                                    </div>
-                                </div>
-                                <div class="form-actions-inline">
-                                    <button type="submit" class="btn btn-primary btn-sm btn-save-section" data-section="bb">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar Banco do Brasil
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <!-- C6 Bank -->
-                            <div class="bank-entry-group">
-                                <h3>C6 Bank CDB</h3>
-                                <div class="form-group-row-penta">
-                                    <div class="form-group">
-                                        <label for="inv-c6-cdb">Saldo CDB (R$)</label>
-                                        <input type="text" id="inv-c6-cdb" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-c6-aporte">Aporte (R$)</label>
-                                        <input type="text" id="inv-c6-aporte" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-c6-retirada">Retirada (R$)</label>
-                                        <input type="text" id="inv-c6-retirada" class="currency-input" placeholder="0,00" value="0,00">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-c6-juros">Juros / Rendimento (R$)</label>
-                                        <input type="text" id="inv-c6-juros" class="currency-input" placeholder="0,00" value="">
-                                    </div>
-                                    <div class="form-group">
-                                        <label for="inv-c6-total">Total Fim do Mês (R$)</label>
-                                        <input type="text" id="inv-c6-total" class="currency-input" placeholder="0,00" value="0,00" disabled style="background: rgba(255, 255, 255, 0.05); color: #9ca3af; border: 1px solid rgba(255, 255, 255, 0.1); cursor: not-allowed;">
-                                    </div>
-                                </div>
-                                <div class="form-actions-inline">
-                                    <button type="submit" class="btn btn-primary btn-sm btn-save-section" data-section="c6">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar C6 Bank
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title">Investimentos</h3>
+                        <p class="ov-sub">Saldo final = saldo inicial + aportes − retiradas + rendimento.</p>
+                        <div id="lan-banks"></div>
                     </div>
 
-                    <!-- Sub-tab 2: Expenses -->
-                    <div class="sub-tab-content" id="subtab-expenses">
-                        <div class="form-card-column" style="width: 100%;">
-                            <div class="column-header">
-                                <i class="fa-solid fa-receipt"></i>
-                                <h2>Despesas Mensais</h2>
-                            </div>
-                            
-                            <div class="bank-entry-group">
-                                <h3>Gastos Fixos</h3>
-                                <div class="form-inputs-dynamic-grid" id="fixed-expenses-container">
-                                    <!-- Inputs dinâmicos injetados via JS -->
-                                </div>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-add-fixed" style="margin-top: 10px; padding: 6px 12px; font-size: 11px;">
-                                    <i class="fa-solid fa-plus"></i> Adicionar Item
-                                </button>
-                                <div class="form-actions-inline" style="margin-top: 15px;">
-                                    <button type="submit" class="btn btn-primary btn-sm btn-save-section" data-section="fixed">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar Gastos Fixos
-                                    </button>
-                                </div>
-                            </div>
-                            
-                            <div class="bank-entry-group card-expenses-section">
-                                <h3>Faturas de Cartão de Crédito</h3>
-                                <div class="form-inputs-dynamic-grid" id="card-expenses-container">
-                                    <!-- Inputs dinâmicos injetados via JS -->
-                                </div>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-add-card" style="margin-top: 10px; padding: 6px 12px; font-size: 11px;">
-                                    <i class="fa-solid fa-plus"></i> Adicionar Cartão
-                                </button>
-                                <div class="form-actions-inline" style="margin-top: 15px;">
-                                    <button type="submit" class="btn btn-primary btn-sm btn-save-section" data-section="cards">
-                                        <i class="fa-solid fa-floppy-disk"></i> Salvar Faturas de Cartão
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title"><label for="lan-note">Anotação do mês</label></h3>
+                        <p class="ov-sub">Opcional. Aparece no gráfico e na tabela de Patrimônio.</p>
+                        <input type="text" id="lan-note" class="lan-note" maxlength="200" placeholder="Ex.: retirada para pagar o carro" autocomplete="off">
                     </div>
 
-                    <!-- Sub-tab 3: Incomes -->
-                    <div class="sub-tab-content" id="subtab-incomes">
-                        <div class="form-card-column" style="width: 100%;">
-                            <div class="column-header">
-                                <i class="fa-solid fa-hand-holding-dollar"></i>
-                                <h2>Receitas (Entradas)</h2>
-                            </div>
-                            
-                            <div class="bank-entry-group">
-                                <h3>Receitas Recorrentes e Extras</h3>
-                                <div class="form-inputs-dynamic-grid" id="incomes-container">
-                                    <!-- Inputs dinâmicos injetados via JS -->
-                                </div>
-                                <button type="button" class="btn btn-secondary btn-sm" id="btn-add-income" style="margin-top: 10px; padding: 6px 12px; font-size: 11px;">
-                                    <i class="fa-solid fa-plus"></i> Adicionar Receita
-                                </button>
-                            </div>
-
-                            <div class="form-actions" style="margin-top: 15px;">
-                                <button type="submit" class="btn btn-primary btn-block btn-large">
-                                    <i class="fa-solid fa-floppy-disk"></i> Salvar Receitas
-                                </button>
-                            </div>
+                    <div class="lan-bar">
+                        <dl class="lan-sums">
+                            <div><dt>Receita</dt><dd id="lan-sum-income">R$ 0,00</dd></div>
+                            <div><dt>Despesa</dt><dd id="lan-sum-expenses">R$ 0,00</dd></div>
+                            <div><dt>Investido</dt><dd id="lan-sum-invested">R$ 0,00</dd></div>
+                            <div><dt>Saldo dos investimentos</dt><dd id="lan-sum-portfolio">R$ 0,00</dd></div>
+                        </dl>
+                        <div class="lan-bar-actions">
+                            <span class="lan-dirty" id="lan-dirty" aria-live="polite"></span>
+                            <button type="submit" class="btn btn-primary" id="lan-save">Salvar mês</button>
                         </div>
                     </div>
                 </form>
             </section>
 
-            <!-- TAB 3: HISTORY (HISTÓRICO) -->
-            <section class="tab-content" id="tab-history">
-                <div class="history-controls">
-                    <h3>Visualização de Planilha Consolidada</h3>
-                    <div class="btn-group" id="history-year-selector">
-                        <button class="btn btn-secondary active" data-year="2026">2026</button>
-                        <button class="btn btn-secondary" data-year="2025">2025</button>
-                        <button class="btn btn-secondary" data-year="2024">2024</button>
+            <!-- HISTÓRICO (planilha do ano) -->
+            <section class="tab-content" id="tab-historico">
+                <div class="ov-card">
+                    <div class="ov-hero-head">
+                        <div>
+                            <h3 class="ov-title" id="his-title">Planilha do ano</h3>
+                            <p class="ov-sub" id="his-sub"></p>
+                        </div>
+                        <button type="button" class="btn btn-secondary" id="his-export"><i class="fa-solid fa-file-excel"></i> Exportar Excel</button>
                     </div>
+                    <div class="table-responsive"><table class="his-table" id="his-table"></table></div>
                 </div>
-
-                <!-- Investment Summary Table -->
-                <div class="table-card">
-                    <div class="table-header">
-                        <h3>Detalhamento dos Investimentos</h3>
-                        <p class="subtitle">Visão anual de saldos de CDB, rendimentos (juros) e aportes.</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-investments">
-                            <thead>
-                                <!-- Dynamic headers will be injected here -->
-                            </thead>
-                            <tbody>
-                                <!-- Dynamic rows will be injected here -->
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-
-                <!-- Budget & Expenses Summary Table -->
-                <div class="table-card" id="history-budget-card">
-                    <div class="table-header">
-                        <h3>Fluxo de Caixa & Orçamento</h3>
-                        <p class="subtitle">Detalhamento mensal de despesas fixas, variáveis (cartões de crédito) e sobra.</p>
-                    </div>
-                    <div class="table-responsive">
-                        <table class="data-table" id="table-budget">
-                            <thead>
-                                <!-- Dynamic headers -->
-                            </thead>
-                            <tbody>
-                                <!-- Dynamic rows -->
-                            </tbody>
-                        </table>
-                    </div>
+                <div class="ov-card">
+                    <h3 class="ov-title">Ano a ano</h3>
+                    <p class="ov-sub">Só meses fechados. O ano escolhido no seletor fica destacado.</p>
+                    <div class="table-responsive"><table class="pat-table" id="his-years"></table></div>
                 </div>
             </section>
 
-            <!-- TAB 4: SIMULATOR (SIMULADOR DE PROJEÇÕES) -->
-            <section class="tab-content" id="tab-simulator">
-                <!-- Selector actions -->
-                <div class="sim-mode-selector" style="display: flex; gap: 15px; margin-bottom: 20px;">
-                    <button class="btn btn-primary btn-sm sim-mode-btn active" id="btn-mode-manual" style="border-radius: 8px;">
-                        <i class="fa-solid fa-sliders"></i> Simulador Anual (Espelho do Ano)
-                    </button>
-                    <button class="btn btn-secondary btn-sm sim-mode-btn" id="btn-mode-goal" style="border-radius: 8px;">
-                        <i class="fa-solid fa-bullseye"></i> Planejador de Metas
-                    </button>
-                </div>
+            <!-- ORÇAMENTO -->
+            <section class="tab-content" id="tab-orcamento">
+                <div class="ov-empty" id="orc-empty" style="display: none;"></div>
+                <div id="orc-body">
+                    <div class="ov-card">
+                        <h3 class="ov-title" id="orc-summary-title">Resumo do mês</h3>
+                        <div class="ov-budget" id="orc-summary"></div>
+                    </div>
 
-                <!-- MANUAL SIMULATOR CONTAINER -->
-                <div class="simulator-layout" id="sim-manual-layout">
-                    <!-- Controls Column -->
-                    <div class="simulator-controls-card">
-                        <h2>Parâmetros da Projeção Anual</h2>
-                        <p class="subtitle">Simule a evolução do patrimônio de Janeiro a Dezembro editando o capital inicial, os aportes e rendimentos mensais.</p>
-                        
-                        <div class="simulator-form-group">
-                            <label for="sim-starting">Capital Inicial (R$ - Jan)</label>
-                            <input type="number" id="sim-starting" step="1000" class="sim-number-input" value="300000">
+                    <div class="ov-card">
+                        <div class="ov-hero-head">
+                            <div>
+                                <h3 class="ov-title">Receita e despesa por mês</h3>
+                                <p class="ov-sub">Mês com rótulo em vermelho: a despesa passou da receita.</p>
+                                <ul class="ov-legend" aria-label="Legenda">
+                                    <li><span class="ov-swatch" style="background: #0ea371;"></span>Receita</li>
+                                    <li><span class="ov-swatch" style="background: #6366f1;"></span>Gastos fixos</li>
+                                    <li><span class="ov-swatch" style="background: #d97706;"></span>Cartões</li>
+                                </ul>
+                            </div>
+                            <div class="ov-range" id="orc-range" role="group" aria-label="Período do gráfico">
+                                <button type="button" data-range="12" class="active">12 meses</button>
+                                <button type="button" data-range="all">Tudo</button>
+                            </div>
                         </div>
-                        
-                        <div class="sim-table-wrapper">
-                            <table class="sim-table">
-                                <thead>
-                                    <tr>
-                                        <th>Mês</th>
-                                        <th>Aporte (R$)</th>
-                                        <th>Juros (R$)</th>
-                                        <th style="text-align: right;">Total</th>
-                                    </tr>
-                                </thead>
-                                <tbody id="sim-months-inputs">
-                                    <!-- Dynamic rows from JS -->
-                                </tbody>
-                            </table>
-                        </div>
-                        <p style="font-size: 11px; color: var(--color-text-secondary); margin-top: 8px;">* Valores com asterisco (*) ou campos em cinza utilizam aporte estimado de R$ 7.000,00 e/ou rendimento estimado de 10% a.a. para meses com valores zerados no banco de dados.</p>
+                        <div class="ov-chart ov-chart-tall"><canvas id="orc-chart"></canvas></div>
+                    </div>
 
-                        <div class="simulator-metrics-box">
-                            <div class="sim-metric">
-                                <span class="sim-metric-title">Capital Inicial (Jan)</span>
-                                <span class="sim-metric-value" id="sim-result-starting">R$ 0,00</span>
-                            </div>
-                            <div class="sim-metric">
-                                <span class="sim-metric-title">Total Aportado no Ano</span>
-                                <span class="sim-metric-value" id="sim-result-invested">R$ 0,00</span>
-                            </div>
-                            <div class="sim-metric">
-                                <span class="sim-metric-title">Total Rendimento no Ano</span>
-                                <span class="sim-metric-value accent" id="sim-result-juros">R$ 0,00</span>
-                            </div>
-                            <div class="sim-metric highlight">
-                                <span class="sim-metric-title">Patrimônio Dezembro</span>
-                                <span class="sim-metric-value" id="sim-result-final">R$ 0,00</span>
-                            </div>
+                    <div class="orc-split">
+                        <div class="ov-card">
+                            <h3 class="ov-title" id="orc-where-title">Para onde foi o dinheiro</h3>
+                            <p class="ov-sub" id="orc-where-note"></p>
+                            <div class="orc-rows" id="orc-where"></div>
+                        </div>
+                        <div class="ov-card">
+                            <h3 class="ov-title">Receitas do mês</h3>
+                            <div id="orc-incomes"></div>
                         </div>
                     </div>
 
-                    <!-- Result Column -->
-                    <div class="simulator-result-card">
-                        <div class="chart-header">
-                            <h3>Projeção de Patrimônio Futuro</h3>
-                            <span class="chart-subtitle">Distribuição entre Capital Aportado e Juros Compostos acumulados</span>
-                        </div>
-                        <div class="chart-wrapper simulator-chart-wrapper">
-                            <canvas id="chart-projection"></canvas>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- GOAL SIMULATOR CONTAINER -->
-                <div class="simulator-layout" id="sim-goal-layout" style="display: none;">
-                    <!-- Controls Column -->
-                    <div class="simulator-controls-card">
-                        <h2>Parâmetros da Meta</h2>
-                        <p class="subtitle">Insira a meta de patrimônio, o prazo e a taxa estimada de juros para descobrir o aporte mensal necessário.</p>
-                        
-                        <div class="simulator-form-group">
-                            <label for="sim-goal-target">Meta de Patrimônio (R$)</label>
-                            <input type="text" id="sim-goal-target" class="currency-input" placeholder="1.000.000,00" value="1.000.000,00">
-                        </div>
-                        
-                        <div class="simulator-form-group">
-                            <label for="sim-goal-starting">Capital Inicial (R$)</label>
-                            <input type="text" id="sim-goal-starting" class="currency-input" placeholder="0,00" value="300.000,00">
-                        </div>
-                        
-                        <div class="simulator-form-group">
-                            <label for="sim-goal-months">Prazo (Meses)</label>
-                            <input type="number" id="sim-goal-months" min="1" max="600" class="sim-number-input" value="120" style="padding: 10px 14px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
-                        </div>
-
-                        <div class="simulator-form-group">
-                            <label for="sim-goal-rate">Taxa de Juros Estimada (% a.a.)</label>
-                            <input type="number" id="sim-goal-rate" min="0" max="100" step="0.1" class="sim-number-input" value="10" style="padding: 10px 14px; font-size: 13px; font-weight: 500; border-radius: 8px; border: 1px solid var(--border-color); width: 100%;">
-                        </div>
-
-                        <div class="simulator-metrics-box" style="margin-top: 15px;">
-                            <div class="sim-metric highlight">
-                                <span class="sim-metric-title">Aporte Mensal Requerido</span>
-                                <span class="sim-metric-value text-green" id="sim-goal-req-aporte" style="font-size: 16px;">R$ 0,00</span>
-                            </div>
-                            <div class="sim-metric">
-                                <span class="sim-metric-title">Total dos Aportes</span>
-                                <span class="sim-metric-value" id="sim-goal-total-aportado">R$ 0,00</span>
-                            </div>
-                            <div class="sim-metric">
-                                <span class="sim-metric-title">Total de Juros Ganhos</span>
-                                <span class="sim-metric-value text-gold" id="sim-goal-total-juros">R$ 0,00</span>
-                            </div>
-                        </div>
+                    <div class="ov-card">
+                        <h3 class="ov-title" id="orc-months-title">Mês a mês</h3>
+                        <div class="table-responsive"><table class="pat-table" id="orc-months"></table></div>
                     </div>
 
-                    <!-- Result Column -->
-                    <div class="simulator-result-card" style="display: flex; flex-direction: column; gap: 20px;">
-                        <div class="chart-header">
-                            <h3>Evolução Patrimonial para Atingir a Meta</h3>
-                            <span class="chart-subtitle">Progressão mensal estimada de aportes + juros compostos</span>
-                        </div>
-                        <div class="chart-wrapper simulator-chart-wrapper" style="height: 250px;">
-                            <canvas id="chart-goal-projection"></canvas>
-                        </div>
-
-                        <div class="table-card" style="margin-top: 10px; border: none; padding: 0; background: transparent; box-shadow: none;">
-                            <div class="table-header" style="padding: 0 0 10px 0;">
-                                <h4>Demonstrativo Mês a Mês</h4>
-                            </div>
-                            <div class="table-responsive" style="max-height: 250px; overflow-y: auto; border: 1px solid var(--border-color); border-radius: 10px;">
-                                <table class="data-table" id="table-sim-goal-months" style="font-size: 12px;">
-                                    <thead>
-                                        <tr>
-                                            <th>MÊS</th>
-                                            <th>SALDO INICIAL</th>
-                                            <th>APORTE MENSAL</th>
-                                            <th>JUROS RECEBIDOS</th>
-                                            <th>SALDO FINAL</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody id="sim-goal-months-body">
-                                        <!-- Dynamic entries from JS -->
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </section>
-
-            <!-- TAB: ADVANCED SIMULATOR (SIMULADOR PRO) -->
-            <section class="tab-content" id="tab-adv-simulator">
-                <div class="adv-sim-layout">
-                    <!-- Column 1: Configuration Controls -->
-                    <div class="adv-sim-controls-panel">
-                        <div class="panel-section">
-                            <h3 class="section-title"><i class="fa-solid fa-sliders"></i> Parâmetros Gerais</h3>
-                            
-                            <div class="presets-row">
-                                <button type="button" class="preset-btn" data-preset="saving">Poupança (6% a.a.)</button>
-                                <button type="button" class="preset-btn active" data-preset="fixed">Renda Fixa (10.5% a.a.)</button>
-                                <button type="button" class="preset-btn" data-preset="equity">Arrojado (13% a.a.)</button>
-                                <button type="button" class="preset-btn" data-preset="real">IPCA + 6% (Real)</button>
-                            </div>
-
-                            <div class="control-grid-2">
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-starting">Capital Inicial (R$)</label>
-                                    <input type="number" id="adv-sim-starting" step="5000" class="sim-number-input" value="300000">
-                                </div>
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-monthly">Aporte Mensal (R$)</label>
-                                    <input type="number" id="adv-sim-monthly" step="500" class="sim-number-input" value="7000">
-                                </div>
-                            </div>
-
-                            <div class="control-row-slider">
-                                <div class="slider-header">
-                                    <label for="adv-sim-years">Prazo da Simulação: <span id="adv-sim-years-val" class="slider-val">20 anos</span></label>
-                                </div>
-                                <input type="range" id="adv-sim-years" min="1" max="40" value="20" class="sim-slider">
-                            </div>
-
-                            <div class="control-grid-2">
-                                <div class="control-row-slider">
-                                    <div class="slider-header">
-                                        <label for="adv-sim-rate">Juros Anual: <span id="adv-sim-rate-val" class="slider-val">10.5%</span></label>
-                                    </div>
-                                    <input type="range" id="adv-sim-rate" min="1" max="25" step="0.1" value="10.5" class="sim-slider">
-                                </div>
-                                <div class="control-row-slider">
-                                    <div class="slider-header">
-                                        <label for="adv-sim-inflation">Inflação Anual: <span id="adv-sim-inflation-val" class="slider-val">4.5%</span></label>
-                                    </div>
-                                    <input type="range" id="adv-sim-inflation" min="0" max="15" step="0.1" value="4.5" class="sim-slider">
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="panel-section">
-                            <h3 class="section-title"><i class="fa-solid fa-chart-line"></i> Aumentos & Aportes Extras</h3>
-                            
-                            <div class="control-row-slider">
-                                <div class="slider-header">
-                                    <label for="adv-sim-increase">Crescimento Anual do Aporte: <span id="adv-sim-increase-val" class="slider-val">3%</span></label>
-                                </div>
-                                <input type="range" id="adv-sim-increase" min="0" max="15" step="0.5" value="3" class="sim-slider">
-                            </div>
-
-                            <div class="control-grid-2">
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-bonus">Aporte Anual Recorrente (Bônus/13º) (R$)</label>
-                                    <input type="number" id="adv-sim-bonus" step="1000" class="sim-number-input" value="10000">
-                                </div>
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-oneoff">Aporte Extra Único (R$)</label>
-                                    <input type="number" id="adv-sim-oneoff" step="5000" class="sim-number-input" value="0">
-                                </div>
-                            </div>
-                            
-                            <div class="simulator-form-group">
-                                <label for="adv-sim-oneoff-year">Ano do Aporte Extra Único (1 a 40)</label>
-                                <input type="number" id="adv-sim-oneoff-year" min="1" max="40" class="sim-number-input" value="5">
-                            </div>
-                        </div>
-
-                        <div class="panel-section">
-                            <h3 class="section-title"><i class="fa-solid fa-bullseye"></i> Metas de Independência Financeira</h3>
-                            
-                            <div class="control-grid-2">
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-target-wealth">Meta de Patrimônio (R$)</label>
-                                    <input type="number" id="adv-sim-target-wealth" step="50000" class="sim-number-input" value="1500000">
-                                </div>
-                                <div class="simulator-form-group">
-                                    <label for="adv-sim-target-income">Renda Desejada na Aposentadoria (R$/mês)</label>
-                                    <input type="number" id="adv-sim-target-income" step="500" class="sim-number-input" value="8000">
-                                </div>
-                            </div>
-
-                            <div class="control-row-slider">
-                                <div class="slider-header">
-                                    <label for="adv-sim-swr">Taxa de Retirada Segura (SWR): <span id="adv-sim-swr-val" class="slider-val">4.0% ao ano</span></label>
-                                </div>
-                                <input type="range" id="adv-sim-swr" min="2" max="8" step="0.2" value="4.0" class="sim-slider">
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Column 2: Dashboard Results -->
-                    <div class="adv-sim-results-panel">
-                        <div class="adv-sim-metrics-grid">
-                            <div class="adv-metric-card highlight">
-                                <span class="adv-metric-title">Patrimônio Final Bruto</span>
-                                <span class="adv-metric-value" id="adv-result-gross">R$ 0,00</span>
-                                <span class="adv-metric-desc">Em valor nominal futuro</span>
-                            </div>
-                            <div class="adv-metric-card shadow">
-                                <span class="adv-metric-title">Patrimônio Real (Poder de Compra)</span>
-                                <span class="adv-metric-value text-green" id="adv-result-real">R$ 0,00</span>
-                                <span class="adv-metric-desc">Descontado os efeitos da inflação</span>
-                            </div>
-                            <div class="adv-metric-card">
-                                <span class="adv-metric-title">Total Investido</span>
-                                <span class="adv-metric-value" id="adv-result-invested">R$ 0,00</span>
-                                <span class="adv-metric-desc" id="adv-result-invested-pct">0% do total</span>
-                            </div>
-                            <div class="adv-metric-card">
-                                <span class="adv-metric-title">Juros Acumulados</span>
-                                <span class="adv-metric-value text-gold" id="adv-result-interest">R$ 0,00</span>
-                                <span class="adv-metric-desc" id="adv-result-interest-pct">0% do total</span>
-                            </div>
-                            <div class="adv-metric-card col-span-2 clickable-card" id="adv-income-card">
-                                <div class="metric-flex-row">
-                                    <div>
-                                        <span class="adv-metric-title">Renda Passiva Mensal Gerada</span>
-                                        <span class="adv-metric-value text-blue" id="adv-result-passive-income">R$ 0,00</span>
-                                        <span class="adv-metric-desc" id="adv-result-passive-desc">Usando taxa de retirada de 4.0% a.a.</span>
-                                    </div>
-                                    <div class="goal-status-box" id="adv-goal-status">
-                                        <i class="fa-solid fa-hourglass-half"></i> Projeção...
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <!-- Projections Chart -->
-                        <div class="chart-box">
-                            <div class="chart-header">
-                                <h3>Crescimento Patrimonial ao Longo do Tempo</h3>
-                                <span class="chart-subtitle">Bruto vs Poder de Compra Real vs Total de Aportes</span>
-                            </div>
-                            <div class="chart-wrapper adv-sim-chart-wrapper">
-                                <canvas id="chart-adv-projection"></canvas>
-                            </div>
-                        </div>
-
-                        <!-- Pie breakdown & Analysis Summary -->
-                        <div class="analysis-row">
-                            <div class="breakdown-card">
-                                <h4>Composição do Patrimônio</h4>
-                                <div class="chart-wrapper doughnut-wrapper">
-                                    <canvas id="chart-adv-breakdown"></canvas>
-                                </div>
-                            </div>
-                            <div class="summary-card">
-                                <h4>Resumo da Viabilidade Financeira</h4>
-                                <div class="summary-content" id="adv-sim-text-summary">
-                                    <!-- Dynamic text evaluation -->
-                                </div>
-                            </div>
-                        </div>
-                    </div>
+                    <details class="ov-card orc-details">
+                        <summary><span class="ov-title" id="orc-detail-title">Detalhe por categoria</span><span class="ov-muted">valores em R$</span></summary>
+                        <div class="table-responsive"><table class="pat-table orc-dense" id="orc-detail"></table></div>
+                    </details>
                 </div>
             </section>
 
@@ -1313,6 +517,12 @@
 
     <!-- Main JavaScript Logic -->
     <script>window.INVESTIFY_LOGIN_UNICO = {{ 'true' if login_unico else 'false' }};</script>
-    <script src="app.js?v=1.1.4"></script>
+    <script src="app.js?v=1.7.0"></script>
+    <script src="overview.js?v=1.7.0"></script>
+    <script src="patrimonio.js?v=1.7.1"></script>
+    <script src="orcamento.js?v=1.7.0"></script>
+    <script src="historico.js?v=1.7.0"></script>
+    <script src="lancar.js?v=1.7.0"></script>
+    <script src="planejamento.js?v=1.7.0"></script>
 </body>
 </html>
