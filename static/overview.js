@@ -225,6 +225,8 @@ function renderOverview() {
         </div>`;
     }).join('') : '<p class="ov-muted">Sem investimentos lançados neste mês.</p>';
 
+    renderOverviewYield(ref);
+
     // ---- Orçamento do mês ------------------------------------------------
     document.getElementById('ov-budget-title').textContent = `Orçamento de ${monthName.toLowerCase()}`;
     const history = timeline.slice(Math.max(0, refIdx - 6), refIdx).filter(p => p.s.hasBudget);
@@ -453,3 +455,43 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+// Rentabilidade: quanto o dinheiro investido rendeu em % em cada mês
+function renderOverviewYield(ref) {
+    const all = patTimeline().filter(p => p.yieldPct !== null);
+    const end = all.findIndex(p => p.year === ref.year && p.month === ref.month);
+    const win = (end === -1 ? all : all.slice(0, end + 1)).slice(-12);
+    const statsEl = document.getElementById('ov-yield-stats');
+    ovDestroy('yield');
+    if (!win.length) {
+        statsEl.innerHTML = '<p class="ov-muted">Sem rendimento lançado ainda.</p>';
+        return;
+    }
+    const avg = win.reduce((a, p) => a + p.yieldPct, 0) / win.length;
+    const acc = (win.reduce((a, p) => a * (1 + p.yieldPct / 100), 1) - 1) * 100;
+    statsEl.innerHTML = `
+        <div><span class="ov-muted">Média por mês</span><strong>${ovPct(avg, 2)}</strong></div>
+        <div><span class="ov-muted">Acumulado em ${win.length} ${win.length === 1 ? 'mês' : 'meses'}</span><strong>${ovPct(acc, 1)}</strong></div>`;
+    ovCharts.yield = new Chart(document.getElementById('ov-chart-yield').getContext('2d'), {
+        type: 'bar',
+        data: {
+            labels: win.map(ovLabel),
+            datasets: [{
+                label: 'Rentabilidade',
+                data: win.map(p => p.yieldPct),
+                backgroundColor: OV_COLORS.aporte,
+                borderRadius: 3,
+                maxBarThickness: 22
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                tooltip: { callbacks: { label: ctx => `Rentabilidade: ${ovPct(ctx.raw, 2)}`, afterLabel: ctx => `Rendimento: ${formatBRL(win[ctx.dataIndex].s.juros)}` } }
+            },
+            scales: ovAxis({ y: { ticks: { callback: v => ovPct(v, 1), color: OV_COLORS.tick, font: { family: 'Inter', size: 11 } } } })
+        }
+    });
+}

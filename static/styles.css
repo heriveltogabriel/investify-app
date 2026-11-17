@@ -1961,3 +1961,20 @@ input[type="range"]::-webkit-slider-thumb:hover {
 .his-table tr.his-total > * { font-weight: 700; border-top: 1px solid var(--border-hover); }
 .his-month { background: none; border: 0; padding: 2px 4px; border-radius: 4px; color: inherit; font: inherit; cursor: pointer; text-decoration: underline dotted; text-underline-offset: 3px; }
 .his-month:hover, .his-month:focus-visible { color: var(--color-text-primary); background: rgba(var(--accent-color-rgb), 0.15); outline: none; }
+
+/* Visão Geral: patrimônio total e rentabilidade */
+.ov-stack { display: flex; gap: 2px; height: 14px; border-radius: 7px; overflow: hidden; margin-bottom: 16px; }
+.ov-stack > div { height: 100%; min-width: 4px; }
+.ov-yield-stats { display: flex; gap: 28px; margin: 6px 0 12px; }
+.ov-yield-stats div { display: flex; flex-direction: column; gap: 2px; font-size: 13px; }
+.ov-yield-stats strong { font-size: 20px; font-weight: 600; color: var(--color-text-primary); }
+.ov-chart-short { height: 150px; }
+
+/* Patrimônio: composição do total */
+.pat-compose { margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--border-color); }
+.pat-compose-list { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 16px; }
+.pat-compose-list li { display: grid; grid-template-columns: auto 1fr; column-gap: 10px; row-gap: 2px; font-size: 14px; color: var(--color-text-secondary); }
+.pat-compose-list li > .ov-swatch { margin-top: 5px; grid-row: 1 / span 2; }
+.pat-compose-list strong { font-weight: 500; color: var(--color-text-primary); margin-right: 4px; }
+.pat-compose-list small { display: block; font-size: 12px; margin-top: 2px; }
+.pat-compose-list .ov-num { grid-column: 2; font-size: 16px; font-weight: 600; color: var(--color-text-primary); }

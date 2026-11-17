@@ -129,6 +129,12 @@
                                 <h3 class="ov-title">Onde está investido</h3>
                                 <div id="ov-banks"></div>
                             </div>
+                            <div class="ov-card">
+                                <h3 class="ov-title">Rentabilidade</h3>
+                                <p class="ov-sub">Quanto o dinheiro investido rendeu em cada mês.</p>
+                                <div class="ov-yield-stats" id="ov-yield-stats"></div>
+                                <div class="ov-chart ov-chart-short"><canvas id="ov-chart-yield"></canvas></div>
+                            </div>
                         </div>
                     </div>
 
@@ -167,6 +173,7 @@
                 <div id="pat-body">
                     <div class="ov-card">
                         <div class="ov-budget pat-summary" id="pat-summary"></div>
+                        <div class="pat-compose" id="pat-compose"></div>
                     </div>
 
                     <div class="ov-card">
@@ -518,8 +525,8 @@
     <!-- Main JavaScript Logic -->
     <script>window.INVESTIFY_LOGIN_UNICO = {{ 'true' if login_unico else 'false' }};</script>
     <script src="app.js?v=1.7.0"></script>
-    <script src="overview.js?v=1.7.0"></script>
-    <script src="patrimonio.js?v=1.7.1"></script>
+    <script src="overview.js?v=1.8.1"></script>
+    <script src="patrimonio.js?v=1.8.0"></script>
     <script src="orcamento.js?v=1.7.0"></script>
     <script src="historico.js?v=1.7.0"></script>
     <script src="lancar.js?v=1.7.0"></script>

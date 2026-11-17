@@ -95,6 +95,8 @@ function renderPatrimonio() {
             <p class="ov-stat-foot ov-muted">Nenhum bem cadastrado. Inclua imóveis e veículos no fim desta página para ver o patrimônio total.</p>
         </div>`}`;
 
+    renderPatComposition(ref);
+
     // ---- Gráfico de evolução ----------------------------------------------
     const windowSize = patRange === 'all' ? timeline.length : 12;
     const win = timeline.slice(Math.max(0, refIdx + 1 - windowSize), refIdx + 1);
@@ -368,3 +370,36 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 });
+
+// Composição do patrimônio total: barra única e legenda em colunas, sob os números do topo
+function renderPatComposition(ref) {
+    const el = document.getElementById('pat-compose');
+    if (!el) return;
+    const key = `${ref.year}-${String(ref.month).padStart(2, '0')}`;
+    const groups = [
+        { id: 'fin', name: 'Investimentos', color: '#6366f1', value: ref.s.networth, items: [] },
+        { id: 'imovel', name: 'Imóveis', color: '#0ea371', value: 0, items: [] },
+        { id: 'veiculo', name: 'Veículos', color: '#d97706', value: 0, items: [] },
+        { id: 'outro', name: 'Outros bens', color: '#9ca3af', value: 0, items: [] }
+    ];
+    (extrasData.bens || []).filter(b => b.desde <= key).forEach(b => {
+        const g = groups.find(x => x.id === b.tipo) || groups[3];
+        g.value += (b.valor || 0) - (b.divida || 0);
+        g.items.push(b.nome);
+    });
+    const shown = groups.filter(g => g.value > 0);
+    const total = shown.reduce((a, g) => a + g.value, 0);
+    if (shown.length <= 1) { el.style.display = 'none'; el.innerHTML = ''; return; }
+    el.style.display = 'block';
+    el.innerHTML = `
+        <div class="ov-stack" role="img" aria-label="Composição do patrimônio total">
+            ${shown.map(g => `<div style="width: ${(g.value / total) * 100}%; background: ${g.color};" title="${g.name}: ${formatBRL(g.value)}"></div>`).join('')}
+        </div>
+        <ul class="pat-compose-list">
+            ${shown.map(g => `<li>
+                <span class="ov-swatch" style="background: ${g.color};"></span>
+                <span><strong>${g.name}</strong> ${ovPct((g.value / total) * 100, 0)}${g.items.length ? `<small>${g.items.map(patEsc).join(', ')}</small>` : ''}</span>
+                <span class="ov-num">${formatBRL(g.value)}</span>
+            </li>`).join('')}
+        </ul>`;
+}
